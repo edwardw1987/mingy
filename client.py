@@ -29,6 +29,7 @@ class MinYuanClient(requests.Session):
         self.login(username, password)
 
     def fetch(self, url, *args, **kwargs):
+        kwargs["timeout"] = kwargs.get("timeout", 10)
         url = 'http://%s%s' % (self.addr, url)
         return self.get(url, *args, **kwargs)
 

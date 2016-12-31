@@ -47,12 +47,13 @@ class ReceiveListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         listmix.ListCtrlAutoWidthMixin.__init__(self)
 
     def AddRows(self, data_list):
-        for row in data_list:
+        for key, row in enumerate(data_list):
             count = self.GetItemCount()
-            pos = self.InsertStringItem(count, str(count + 1))
+            pos = self.InsertStringItem(count, row[0])
             # add values in the other columns on the same row
-            for idx, val in enumerate(row):
+            for idx, val in enumerate(row[1:]):
                 self.SetStringItem(pos, idx + 1, val)
+            self.SetItemData(pos, key + 1)
         # self.addCache(data_list)
 
     initRows = AddRows
@@ -70,9 +71,13 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
     def const(self):
         return get_const()
 
+    @property
+    def columnNum(self):
+        return len(self.const["headings"])
+
     def construct(self):
         self.initAll()
-
+        listmix.ColumnSorterMixin.__init__(self, self.columnNum)
         self.Center()
         self.SetTitle(self.const["weixin_demo_title"])
 
@@ -81,8 +86,8 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
             if i.startswith('_init'):
                 getattr(self, i)()
 
-    # def _initEventBinding(self):
-    #     self.Bind(wx.EVT_SIZE, self.OnResize)
+    def _initEventBinding(self):
+        self.Bind(wx.EVT_SIZE, self.OnResize)
 
     def _initMenuBar(self):
         _OD = OrderedDict()
@@ -107,22 +112,21 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
     def _initListCtrl(self):
         const_headings = self.const["headings"]
         self.LC = ReceiveListCtrl(self,
-                           style=wx.LC_REPORT,
-                           headings=const_headings,
-                           # columnFormat=wx.LIST_FORMAT_CENTER,
-                           fgcolor='#f40',
+                                  style=wx.LC_REPORT,
+                                  headings=const_headings,
+                                  # columnFormat=wx.LIST_FORMAT_CENTER,
+                                  fgcolor='#f40',
 
-                           )
+                                  )
         my = MinYuanClient()
-        rows = my.getReceiveList(page_size=30)
+        rl = my.getReceiveList(page_size=30)
+        self.LC.AddRows(rl)
         datamap = {}
-        for idx, val in enumerate(rows):
-            datamap[idx + 1] = val
-        print datamap
+        for idx, val in enumerate(rl):
+            datamap[idx + 1] = tuple(val)
         self.itemDataMap = datamap
-        listmix.ColumnSorterMixin.__init__(self, len(const_headings))
-        self.LC.initRows(rows)
-        # self.LC.AdaptWidth(len(const_headings), [0.5, 1, 3, 0.5, 3, 0.5, 0.5, 1])
+        self.LC.AdaptWidth(len(const_headings), [1, 3, 1, 2, 1, 1, 1])
+
     def OnAdd(self, evt):
         pass
     def OnQuit(self, evt):
@@ -134,8 +138,12 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         pass
 
     def OnResize(self, e):
-        self.LC.AdaptWidth(8, proportions=[0.5, 1, 3, 0.5, 3, 0.5, 0.5, 1])
-        self.LC.SetClientSize(self.GetClientSize())
+        def call():
+            self.LC.Hide()
+            self.LC.AdaptWidth(7, proportions=[1, 3, 1, 2, 1, 1, 1])
+            self.LC.SetClientSize(self.GetClientSize())
+            self.LC.Show()
+        wx.CallAfter(call)
 
     def GetListCtrl(self):
         return self.LC
