@@ -119,13 +119,15 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
 
                                   )
         my = MinYuanClient()
-        rl = my.getReceiveList(page_size=30)
-        self.LC.AddRows(rl)
-        datamap = {}
-        for idx, val in enumerate(rl):
-            datamap[idx + 1] = tuple(val)
-        self.itemDataMap = datamap
-        self.LC.AdaptWidth(len(const_headings), [1, 3, 1, 2, 1, 1, 1])
+        data = my.getReceiveList(page_size=30)
+        if "receiveList" in data:
+            rl = data["receiveList"]
+            self.LC.AddRows(rl)
+            datamap = {}
+            for idx, val in enumerate(rl):
+                datamap[idx + 1] = tuple(val)
+            self.itemDataMap = datamap
+            self.LC.AdaptWidth(len(const_headings), [1, 3, 1, 2, 1, 1, 1])
 
     def OnAdd(self, evt):
         pass

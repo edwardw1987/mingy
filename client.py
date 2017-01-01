@@ -6,9 +6,10 @@
 import requests
 import random
 import hashlib
-import urllib
+from requests.exceptions import ConnectTimeout
 from pyquery import PyQuery as Q
 import argparse
+
 
 def handle_args():
     parser = argparse.ArgumentParser(description="MingYun CLI")
@@ -29,9 +30,15 @@ class MinYuanClient(requests.Session):
         self.login(username, password)
 
     def fetch(self, url, *args, **kwargs):
-        kwargs["timeout"] = kwargs.get("timeout", 10)
+        kwargs["timeout"] = kwargs.get("timeout", 5)
         url = 'http://%s%s' % (self.addr, url)
-        return self.get(url, *args, **kwargs)
+        ret = {}
+        try:
+            ret["response"] = self.get(url, *args, **kwargs)
+        except ConnectTimeout:
+            ret["errMsg"] = ConnectTimeout.__name__
+        return ret
+
 
     def login(self, username, password):
         resp = self.fetch(self.loginurl, params={
@@ -42,6 +49,12 @@ class MinYuanClient(requests.Session):
         # print resp.content
 
     def getReceiveList(self, page_size=20, page_num=1):
+        """
+
+        :param page_size:
+        :param page_num:
+        :return: {"receiveList": [], "errMsg": xx}
+        """
         path = "/_grid/griddata.aspx?gridId=appGrid&sortCol=ReceiveDate&sortDir=descend&vscrollmode=0&multiSelect=1&selectByCheckBox=0&processNullFilter=1&customFilter=&customFilter2=&dependencySQLFilter=&location=&showPageCount=1&appName=Default&application=&cp="
         params = {
             "xml": "/Kfxt/RWGL/Jdjl_Grid.xml",  # <= 所有记录, Jdjl_Grid_My.xml 我的记录
@@ -49,17 +62,20 @@ class MinYuanClient(requests.Session):
             "pageNum": page_num,
             "filter": """<filter type="and"><filter type="and"><filter type="or"><condition operator="api" attribute="TsProjGUID" value="4975b69c-9953-4dd0-a65e-9a36db8c66df" datatype="buprojectfilter" application="0102"/><condition operator="null" attribute="TsProjGUID" application="0102"/></filter></filter><filter type="and"/></filter>""",
         }
-        resp = self.fetch(path, params=params)
-        q = Q(resp.content)
-        tr_arr = q('#gridBodyTable tr')
-        ret = []
-        for tr in tr_arr:
-            trq = Q(tr)
-            r = []
-            for td in trq.children('td')[3:]:
-                r.append(Q(td).text())
-            ret.append(tuple(r))
-        return ret
+        resp_data = self.fetch(path, params=params)
+        if "response" in resp_data:
+            resp = resp_data.pop("response")
+            q = Q(resp.content)
+            tr_arr = q('#gridBodyTable tr')
+            receive_list = []
+            for tr in tr_arr:
+                trq = Q(tr)
+                r = []
+                for td in trq.children('td')[3:]:
+                    r.append(Q(td).text())
+                receive_list.append(tuple(r))
+            resp_data["receiveList"] = receive_list
+        return resp_data
 def main():
     """
     视图(xml)：
@@ -72,7 +88,8 @@ def main():
         建议 /Kfxt/RWGL/Jdjl_Grid_Suggest.xml
     """
     my = MinYuanClient("wubin1", "aaa111")
-    for i in my.getReceiveList():
-        print ' '.join(i).encode('utf-8')
+    print my.getReceiveList()
+    # for i in my.getReceiveList():
+    #     print ' '.join(i).encode('utf-8')
 if __name__ == '__main__':
     main()
