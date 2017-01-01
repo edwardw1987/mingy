@@ -7,7 +7,7 @@ class MingYuanApp(wx.App):
         fr = ui.Frame(
             None,
             icon="countdown/rat_head.ico",
-            size=(800, 600),
+            size=(1200, 600),
             minsize=(400, 300),
         )
         fr.Show()

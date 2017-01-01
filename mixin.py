@@ -27,6 +27,9 @@ class ConstructorMixin(object):
         columnFormat = self.get_arg("columnFormat")
         if not headings:
             return
+        elif headings == -1:
+            self.InsertColumn(0, "", format=wx.LIST_FORMAT_LEFT)
+            return
         for pos, heading in enumerate(headings):
             fmt = columnFormat or wx.LIST_FORMAT_LEFT
             self.InsertColumn(pos, heading, format=fmt)

@@ -1,9 +1,15 @@
 {
     "weixin_demo_title": "明源微信通道提醒-Demo",
     "menubar": [
-        {"title": "操作(&O)", "items": ["添加倒计时\tCtrl+N", "退出\tCtrl+Q"]},
+        {"title": "操作(&O)", "items": ["同步数据\tCtrl+S", "自动同步", "退出\tCtrl+Q"]},
         {"title": "查看(&V)", "items": ["窗口置顶"]},
-        {"title": "设置(&S)", "items": ["闹铃"]}
+        {"title": "设置(&S)", "items": ["自动同步"]}
     ],
-    "headings": ["接待时间", "主题", "请求来源", "房间", "服务请求人", "接待人", "分解状态"]
+    "headings": ["接待时间", "主题", "请求来源", "房间", "服务请求人", "接待人", "分解状态"],
+    "resovle_status": {"closed": "已关闭", "unresolved": "待分解", "resolved": "分解完毕"},
+    "sync_error_msg": "请确认网络正常并且VPN已开启",
+    "sync_error_title": "连接错误",
+    "sync_start_msg": "正在同步数据......",
+    "sync_end_msg":"数据同步成功"
+
 }

@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
-# @Last Modified by:   vivi
-# @Last Modified time: 2016-12-30 21:17:29
+# @Last Modified by:   edward
+# @Last Modified time: 2017-01-01 20:40:37
 import requests
 import random
 import hashlib
 from requests.exceptions import ConnectTimeout
-from pyquery import PyQuery as Q
+from BeautifulSoup import BeautifulSoup
+
 import argparse
 
 
@@ -30,7 +31,7 @@ class MinYuanClient(requests.Session):
         self.login(username, password)
 
     def fetch(self, url, *args, **kwargs):
-        kwargs["timeout"] = kwargs.get("timeout", 5)
+        kwargs["timeout"] = kwargs.get("timeout", 3)
         url = 'http://%s%s' % (self.addr, url)
         ret = {}
         try:
@@ -65,7 +66,15 @@ class MinYuanClient(requests.Session):
         resp_data = self.fetch(path, params=params)
         if "response" in resp_data:
             resp = resp_data.pop("response")
-            q = Q(resp.content)
+            # q = Q(resp.content)
+            soup = BeautifulSoup(resp.content)
+            table = soup.find(attrs={"id":"gridBodyTable"})
+            receive_list = []
+            for tr in table.findAll(name="tr"):
+                r = [ td.getText() for td in tr.findAll(name="td")[3:]]
+                receive_list.append(tuple(r))
+            resp_data["receiveList"] = receive_list
+            return resp_data
             tr_arr = q('#gridBodyTable tr')
             receive_list = []
             for tr in tr_arr:
@@ -74,7 +83,6 @@ class MinYuanClient(requests.Session):
                 for td in trq.children('td')[3:]:
                     r.append(Q(td).text())
                 receive_list.append(tuple(r))
-            resp_data["receiveList"] = receive_list
         return resp_data
 def main():
     """
@@ -89,7 +97,7 @@ def main():
     """
     my = MinYuanClient("wubin1", "aaa111")
     print my.getReceiveList()
-    # for i in my.getReceiveList():
+    # for i in my.getReceiveList()["receiveList"]:
     #     print ' '.join(i).encode('utf-8')
 if __name__ == '__main__':
     main()
