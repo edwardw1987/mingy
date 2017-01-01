@@ -6,7 +6,7 @@ class MingYuanApp(wx.App):
     def OnInit(self):
         fr = ui.Frame(
             None,
-            icon="countdown/rat_head.ico",
+            # icon="countdown/rat_head.ico",
             size=(1200, 600),
             minsize=(400, 300),
         )
