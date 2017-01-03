@@ -2,7 +2,7 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   edward
-# @Last Modified time: 2017-01-03 20:51:34
+# @Last Modified time: 2017-01-03 21:46:37
 import requests
 import random
 import hashlib
@@ -10,7 +10,6 @@ from requests.exceptions import ConnectTimeout
 from BeautifulSoup import BeautifulSoup
 
 import argparse
-
 
 def handle_args():
     parser = argparse.ArgumentParser(description="MingYun CLI")
@@ -38,6 +37,8 @@ class MinYuanClient(requests.Session):
             ret["response"] = self.get(url, *args, **kwargs)
         except ConnectTimeout:
             ret["errMsg"] = ConnectTimeout.__name__
+        except Exception as e :
+            ret["errMsg"] = e       
         return ret
 
 

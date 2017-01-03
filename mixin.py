@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: wangwh8
 # @Date:   2016-12-30 10:18:02
-# @Last Modified by:   wangwh8
-# @Last Modified time: 2016-12-30 13:56:55
+# @Last Modified by:   edward
+# @Last Modified time: 2017-01-03 20:54:06
 import wx
 
 
@@ -26,9 +26,6 @@ class ConstructorMixin(object):
         headings = self.get_arg("headings")
         columnFormat = self.get_arg("columnFormat")
         if not headings:
-            return
-        elif headings == -1:
-            self.InsertColumn(0, "", format=wx.LIST_FORMAT_LEFT)
             return
         for pos, heading in enumerate(headings):
             fmt = columnFormat or wx.LIST_FORMAT_LEFT

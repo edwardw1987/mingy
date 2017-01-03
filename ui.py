@@ -25,7 +25,7 @@ def get_const():
 
 def get_current_time():
     dt = datetime.now()
-    return dt.strftime("%Y-%d-%m %X")
+    return dt.strftime("%Y-%m-%d %X")
 
 def create_menu(frame, data):
     for title, args in data.items():
@@ -61,11 +61,11 @@ class ReceiveListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         listmix.ListCtrlAutoWidthMixin.__init__(self)
 
     def AddRows(self, data_list):
-        self.DeleteAllColumns()
+        # self.DeleteAllColumns()
         self.DeleteAllItems()
         popUpWin = False
-        for pos, heading in enumerate(get_const()["headings"]):
-            self.InsertColumn(pos, heading, format=wx.LIST_FORMAT_LEFT)
+        # for pos, heading in enumerate(get_const()["headings"]):
+        #     self.InsertColumn(pos, heading, format=wx.LIST_FORMAT_LEFT)
         for key, row in enumerate(data_list):
             count = self.GetItemCount()
             pos = self.InsertStringItem(count, row[0])
@@ -153,7 +153,7 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         const_headings = self.const["headings"]
         self.LC = ReceiveListCtrl(self,
                                   style=wx.LC_REPORT,
-                                  headings=-1,
+                                  headings=const_headings,
                                   # columnFormat=wx.LIST_FORMAT_CENTER,
                                   fgcolor='#f40',
                                   )
@@ -167,12 +167,13 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         self.LC.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
 
     def _SyncReceiveList(self, *args, **kwargs):
+        event = args[0]
         my = MinYuanClient()
         data = my.getReceiveList(page_size=30)
         if "receiveList" in data:
             rl = data["receiveList"]
             signal = self.LC.AddRows(rl)
-            if signal:
+            if signal and getattr(event, 'auto', False):
             # ----- 弹窗提醒用户有待分解的记录
                 if self.IsIconized():
                     self.Restore()
@@ -199,7 +200,7 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
             dlg.ShowModal()
     def OnSyncData(self, e):
         self.statusbar.SetStatusText(self.const["sync_start_msg"])
-        wx.CallAfter(self._SyncReceiveList, ())
+        wx.CallAfter(self._SyncReceiveList, e)
 
     def _initToolbar(self):
         self.tb = tb = self.CreateToolBar()
@@ -287,6 +288,7 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         _, s = e.GetValue()
         print s
         if s % 15 == 0:
+            e.auto = True
             self.OnSyncData(e)
 
 
