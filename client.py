@@ -2,7 +2,7 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   edward
-# @Last Modified time: 2017-01-01 20:40:37
+# @Last Modified time: 2017-01-03 20:51:34
 import requests
 import random
 import hashlib
@@ -67,22 +67,15 @@ class MinYuanClient(requests.Session):
         if "response" in resp_data:
             resp = resp_data.pop("response")
             # q = Q(resp.content)
-            soup = BeautifulSoup(resp.content)
+            soup = BeautifulSoup(resp.text)
             table = soup.find(attrs={"id":"gridBodyTable"})
+            if not table:
+                return resp_data
             receive_list = []
             for tr in table.findAll(name="tr"):
                 r = [ td.getText() for td in tr.findAll(name="td")[3:]]
                 receive_list.append(tuple(r))
             resp_data["receiveList"] = receive_list
-            return resp_data
-            tr_arr = q('#gridBodyTable tr')
-            receive_list = []
-            for tr in tr_arr:
-                trq = Q(tr)
-                r = []
-                for td in trq.children('td')[3:]:
-                    r.append(Q(td).text())
-                receive_list.append(tuple(r))
         return resp_data
 def main():
     """

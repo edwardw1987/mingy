@@ -1,12 +1,13 @@
 # coding:utf-8
 import wx
 import ui
+from countdown import resource
 
 class MingYuanApp(wx.App):
     def OnInit(self):
         fr = ui.Frame(
             None,
-            # icon="countdown/rat_head.ico",
+            icon=resource.rat_head_original.getIcon(),
             size=(1200, 600),
             minsize=(400, 300),
         )
