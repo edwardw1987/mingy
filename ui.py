@@ -10,17 +10,17 @@ import  wx.lib.mixins.listctrl  as  listmix
 import images
 from event import CountEvent, EVT_COUNT, CountingThread
 from datetime import datetime
-
+BaseDir = os.path.dirname(__file__)
 def get_const():
-    constfilepath = os.path.join(os.path.dirname(__file__), "const.json")
-    constfilepy = os.path.join(os.path.dirname(__file__), "const.py")
+    constfilepath = os.path.join(BaseDir, "const.json")
+    constfilepy = os.path.join(BaseDir, "const.py")
     try:
         import const
     except ImportError:
         jsondict = json.load(open(constfilepath))
         with open(constfilepy, 'w') as outf:
             outf.write("json=%s" % jsondict)
-        import const
+        from . import const
     return const.json
 
 def get_current_time():
