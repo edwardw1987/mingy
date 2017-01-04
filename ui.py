@@ -50,6 +50,14 @@ def create_menubar(frame, data):
         mb.Append(m, title)
     return mb
 
+class ModalContext(object):
+    def __init__(self):
+        self.show = False
+    def __enter__(self, *args, **kw):
+        self.show = True
+    def __exit__(self, *args, **kw):
+        self.show = False
+modal_context = ModalContext()
 
 @constructor
 class MenuItem(wx.MenuItem):
@@ -193,11 +201,15 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
             self.statusbar.SetStatusText(self.const["sync_end_msg"] + ' at ' + get_current_time())
         else:
             self.statusbar.SetStatusText('')
-            dlg = wx.MessageDialog(self,
-                                   self.const["sync_error_msg"],
-                                   self.const["sync_error_title"],
-                                   wx.OK | wx.ICON_ERROR)
-            dlg.ShowModal()
+            if modal_context.show is False:
+                with modal_context:
+                    dlg = wx.MessageDialog(self,
+                                           self.const["sync_error_msg"],
+                                           self.const["sync_error_title"],
+                                           wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+
     def OnSyncData(self, e):
         self.statusbar.SetStatusText(self.const["sync_start_msg"])
         wx.CallAfter(self._SyncReceiveList, e)
