@@ -2,7 +2,7 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   edward
-# @Last Modified time: 2017-01-21 16:53:20
+# @Last Modified time: 2017-01-21 23:51:26
 import requests
 import random
 import hashlib
@@ -40,6 +40,18 @@ class MinYuanClient(requests.Session):
             password = self.default_pwd
         self.addr = addr
         self.login(username, password)
+
+    def postUrl(self, url, *args, **kwargs):
+        kwargs["timeout"] = kwargs.get("timeout", 6)
+        url = 'http://%s%s' % (self.addr, url)
+        ret = {}
+        try:
+            ret["response"] = self.post(url, *args, **kwargs)
+        except ConnectTimeout:
+            ret["errMsg"] = ConnectTimeout.__name__
+        except Exception as e:
+            ret["errMsg"] = e
+        return ret
 
     def fetch(self, url, *args, **kwargs):
         kwargs["timeout"] = kwargs.get("timeout", 6)
@@ -172,11 +184,10 @@ class MinYuanClient(requests.Session):
             resp_data["rows"] = rows
         return resp_data
 
-    def getTaskCode(self, problemGUID, workerGUID=None):
+    def _preTransferTask(self, problemGUID, workerGUID=None):
         if workerGUID is None:
             workerGUID = 'b23e6df4-e2f7-e411-891a-e41f13c5183a' # 曹伟忠
         # ----------交付任务处理----------
-        # POST
         params = dict(
             mode=1,
             tasksource=2,
@@ -196,15 +207,48 @@ class MinYuanClient(requests.Session):
             resp = resp_data.pop("response")
             # q = Q(resp.content)
             soup = BeautifulSoup(resp.text, 'lxml')
-            td_taskCode = soup.find(attrs={"id": "txtTaskCode"})
-            task_code = td_taskCode.attrs["value"]
-            print 'task_code:', task_code
-            # <td><input name="txtTaskCode" type="text" value="0076201701006"
-            # maxlength="50" readonly="readonly" id="txtTaskCode" class="ro"
-            # /></td>
-            resp_data["task_code"] = task_code
+            # ---------- Prepare Params for Transfering Task ----------
+            for key in {
+                "__VIEWSTATE", "txtTaskCode", "txtClStatus", "txtForeAction",
+                "txtForePara", "txtDoneMode", "txtTaskGUID", "txtSlrGUID",
+                "txtProjGUID", "txtFcInfo", "txtJfRoom", "txtBldGUID",
+                "txtUnit", "txtRoom", "txtRoomGUID", "txtTsProjGUID",
+                "txtTsFcInfo", "txtTsBldGUID", "txtTsUnit", "txtTsRoom",
+                "txtTsRoomGUID", "txtCstGUID", "txtRequestMan", "txtBUGUID",
+                "txtTaskSource", "Relation2Receive", "Relation2CstName", "Relation2Room",
+                "txtReceiveGUID", "txtReceiveGUIDstr", "txtReceiveDate", "txtProblemGUIDstr",
+                "txtIDOfShowSht", "txtIDOfEnabledSht", "txtTimeLimitXML", "IsReport",
+                "txtZrrGUID", "txtUserGUID", "hidNewSlr", "txtWorkerGUIDstr",
+                "txtZrrHfSx", "txtDfkhSx", "txtRwclSx", "txtJfRoomDisplay",
+                "txtProbleState", "txtReceptType", "ddlTaskType", "ddlTaskLevel",
+                "txtSlDate", "txtSlr", "txtZrr", "txtTopic", "txtContent", "txtZzJjfa",
+            }:
+                e = soup.find(attrs={"name": key})
+                if e:
+                    resp_data[key] = e.attrs.get("value", "")
+            iframe = soup.find(attrs=dict(id='_AppUpFile_frmFile'))
+            if iframe:
+                resp_data["_AppUpFile_frmFile"] = iframe.attrs["src"]
+            resp_data.update(dict(
+                __btnUpFile="上 传",
+                __EVENTTARGET="__Submit",
+                __EVENTARGUMENT="2",
+            ))
         return resp_data
 
+    def transferTask(self, problemGUID, workerGUID=None):
+        data = self._preTransferTask(problemGUID, workerGUID)
+        params = dict(
+            mode="1",
+            tasksource="2",
+            taskguid="",
+            receiveguid="",
+            WorkerGUIDStr="b23e6df4-e2f7-e411-891a-e41f13c5183a",
+            funcid="01020502",
+        )
+        resp_data = self.postUrl(URI_RWCL_EDIT, params=params, data=data)
+        self.fetch(data["_AppUpFile_frmFile"])
+        print resp_data["response"]
 
 def main():
     """
@@ -218,14 +262,17 @@ def main():
         建议 /Kfxt/RWGL/Jdjl_Grid_Suggest.xml
     """
     mingy = MinYuanClient("shenkai", "aaa111", addr=MINGYUAN_TEST_ADDR)
-    s = '%3e&processNullFilter=1&customFilter=&customFilter2=&dependencySQLFilter=&location=&pageNum=1&pageSize=20&showPageCount=1&appName=Default&application=&cp= HTTP/1.1'
     # print urllib.unquote_plus(s)
-    # problems =  mingy.getProblemList()
-    # pid = problems["rows"][0].keys()[0]
-    # print mingy.getTaskCode(pid)
-
-    print mingy.getReceiveList()
-    mingy.getUsers()
+    problems =  mingy.getProblemList()
+    print len(problems["rows"])
+    pbs = problems.get("rows")
+    if pbs:
+        pid = pbs[0].keys()[0]
+        print mingy.transferTask(pid)
+    # resp_data = mingy.fetch('/Kfxt/PUB/Verify_Public.aspx?p_Func=%u4EFB%u52A1%u7BA1%u7406&p_Mode=%u95EE%u9898%u89E3%u9501&rdnum=0.17257182981973673')
+    # print resp_data["response"].text.encode('utf-8')
+    # print mingy.getReceiveList()
+    # mingy.getUsers()
     # for i in my.getReceiveList()["receiveList"]:
     #     print ' '.join(i).encode('utf-8')
 if __name__ == '__main__':

@@ -1,0 +1,47 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+    <HEAD>
+        <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8"/>
+        <title></title>
+        <meta name="vs_showGrid" content="False">
+        <meta name="GENERATOR" content="Microsoft Visual Studio .NET 7.0">
+        <meta name="CODE_LANGUAGE" content="Visual Basic 7.0">
+        <meta name="vs_defaultClientScript" content="JavaScript">
+        <meta name="vs_targetSchema" content="http://schemas.microsoft.com/intellisense/ie5">
+        <script type="text/javascript" src="/_controls/settings.aspx"></script><link type="text/css" rel="stylesheet" href="/_common/styles/global_css.axd?v=20161124162016" /><script type="text/javascript" src="/_common/scripts/global.js?v=20160330163538"></script><script type="text/javascript" src="/_controls/util/util.js?v=20140114172800"></script><script type="text/javascript" src="/_controls/upfile/UpFile.js?v=20161009113714" ></script>
+
+</HEAD>
+    <body onload='__ListWin_onload()' MS_POSITIONING="GridLayout" bottomMargin="0" leftMargin="0" topMargin="5" rightMargin="0" style="FONT-SIZE:9pt">
+        <form name="crmForm" method="post" action="UpFile_Main_List.aspx?iFrm=_AppUpFile_frmFile&amp;FkGUID=6f6c17e7-8ad1-4a11-a8b8-b39db9ea446d&amp;DocType=%u4efb%u52a1%u5904%u7406&amp;isallowopenfile=True" id="crmForm">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwULLTIwNzc4NDQ2MDcPFgIeDm15c2Vzc2lvbnN0YXRlBSQzZjMzNTJiYS1lOWRmLWU2MTEtYTMzOS0wMDUwNTZhMjk3YzAWAgIDD2QWAgIBDxYCHgRUZXh0ZWRk9F/rYR20p9OfnukWa7PwKqYWJCE=" />
+
+            <IFRAME id='_AppUpFile_DownLoad' style="display:none"  name='_AppUpFile_DownLoad' src=""></IFRAME>
+            
+            <input name="txtDocCount" type="text" value="0" id="txtDocCount" style="DISPLAY:none" />            
+        </form>
+    </body>
+</HTML>
+<script language="javascript">
+var iLeft = (document.body.clientWidth-200)/2;
+var iTop = (document.body.clientHeight-47)/2;
+document.writeln("<div id='__divRuning' style='POSITION: absolute; Z-INDEX: 108; Left:"+iLeft.toString()+"px; top:"+iTop.toString() + "px; width:223px; height:47px; BACKGROUND-COLOR: white; border:#9E9E9B 1px solid; font:bold 14px; color:#FF5A00; text-align:center; padding-top:16px; DISPLAY:none;'>处理中，请稍候...</div>");
+document.writeln("<input id='___MYSESSIONSTATE' value='3f3352ba-e9df-e611-a339-005056a297c0' style='display:none;'>");
+document.writeln("<input type=\"hidden\" id=\"__iFrm\" name=\"__iFrm\" value=\"_AppUpFile_frmFile\">");
+document.writeln("<input type=\"hidden\" id=\"__FkGUID\" name=\"__FkGUID\" value=\"6f6c17e7-8ad1-4a11-a8b8-b39db9ea446d\">");
+document.writeln("<input type=\"hidden\" id=\"__DocType\" name=\"__DocType\" value=\"任务处理\">");
+document.writeln("<input type=\"hidden\" id=\"__isallowopenfile\" name=\"__isallowopenfile\" value=\"True\">");
+var __pageLoaded = true;
+</script>
+
+
+
+GET /_controls/upfile/UpFile_Main_List.aspx?iFrm=_AppUpFile_frmFile&FkGUID=6f6c17e7-8ad1-4a11-a8b8-b39db9ea446d&DocType=%u4efb%u52a1%u5904%u7406&isallowopenfile=True HTTP/1.1
+Accept: application/x-ms-application, image/jpeg, application/xaml+xml, image/gif, image/pjpeg, application/x-ms-xbap, application/vnd.ms-excel, application/vnd.ms-powerpoint, application/msword, */*
+Referer: http://192.168.0.123/Kfxt/RWGL/Rwcl_Edit.aspx?mode=1&tasksource=2&taskguid=&receiveguid=&WorkerGUIDStr=b23e6df4-e2f7-e411-891a-e41f13c5183a&funcid=01020502
+Accept-Language: zh-CN
+User-Agent: Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; WOW64; Trident/7.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E; InfoPath.3)
+Accept-Encoding: gzip, deflate
+Host: 192.168.0.123
+Connection: Keep-Alive
+Cookie: skin=BZ; ASP.NET_SessionId=vqqiejyqkq3i03fggn1zyc55
