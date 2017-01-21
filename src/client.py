@@ -2,7 +2,7 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   edward
-# @Last Modified time: 2017-01-21 15:58:12
+# @Last Modified time: 2017-01-21 16:53:20
 import requests
 import random
 import hashlib
@@ -13,7 +13,11 @@ from bs4 import BeautifulSoup
 
 MINGYUAN_OFFICIAL_ADDR = '192.168.0.103'
 MINGYUAN_TEST_ADDR = '192.168.0.123'
-
+# ---------- URI ----------
+URI_LOGIN = '/Default_Login.aspx'
+URI_GRID_DATA = '/_grid/griddata.aspx'
+URI_USER_TREE = '/Kfxt/RWGL/Rwcl_Edit_Rwcl_Assign_UserTree.aspx'
+URI_RWCL_EDIT = '/Kfxt/RWGL/Rwcl_Edit.aspx'
 
 def handle_args():
     parser = argparse.ArgumentParser(description="MingYun CLI")
@@ -26,7 +30,6 @@ def handle_args():
 
 
 class MinYuanClient(requests.Session):
-    loginurl = '/Default_Login.aspx?'
     default_usr = "wubin1"
     default_pwd = "aaa111"
 
@@ -39,7 +42,7 @@ class MinYuanClient(requests.Session):
         self.login(username, password)
 
     def fetch(self, url, *args, **kwargs):
-        kwargs["timeout"] = kwargs.get("timeout", 3)
+        kwargs["timeout"] = kwargs.get("timeout", 6)
         url = 'http://%s%s' % (self.addr, url)
         ret = {}
         try:
@@ -51,7 +54,7 @@ class MinYuanClient(requests.Session):
         return ret
 
     def login(self, username, password):
-        resp = self.fetch(self.loginurl, params={
+        resp = self.fetch(URI_LOGIN, params={
             "usercode": username,
             "password": hashlib.md5(password).hexdigest(),
             "rdnum": random.random()
@@ -65,14 +68,29 @@ class MinYuanClient(requests.Session):
         :param page_num:
         :return: {"receiveList": [], "errMsg": xx}
         """
-        path = "/_grid/griddata.aspx?gridId=appGrid&sortCol=ReceiveDate&sortDir=descend&vscrollmode=0&multiSelect=1&selectByCheckBox=0&processNullFilter=1&customFilter=&customFilter2=&dependencySQLFilter=&location=&showPageCount=1&appName=Default&application=&cp="
-        params = {
-            "xml": "/Kfxt/RWGL/Jdjl_Grid.xml",  # <= 所有记录, Jdjl_Grid_My.xml 我的记录
-            "pageSize": page_size,
-            "pageNum": page_num,
-            "filter": """<filter type="and"><filter type="and"><filter type="or"><condition operator="api" attribute="TsProjGUID" value="4975b69c-9953-4dd0-a65e-9a36db8c66df" datatype="buprojectfilter" application="0102"/><condition operator="null" attribute="TsProjGUID" application="0102"/></filter></filter><filter type="and"/></filter>""",
-        }
-        resp_data = self.fetch(path, params=params)
+        params = dict(
+            xml="/Kfxt/RWGL/Jdjl_Grid.xml",  # <= 所有记录, Jdjl_Grid_My.xml 我的记录
+            pageSize=page_size,
+            pageNum=page_num,
+            gridId="appGrid",
+            sortCol="ReceiveDate",
+            sortDir="descend",
+            vscrollmode="0",
+            multiSelect="1",
+            selectByCheckBox="0",
+            processNullFilter="1",
+            customFilter="",
+            customFilter2="",
+            dependencySQLFilter="",
+            location="",
+            showPageCount="1",
+            appName="Default",
+            application="",
+            cp="",
+            filter="""<filter type="and"><filter type="and"><filter type="or"><condition operator="api" attribute="TsProjGUID" value="4975b69c-9953-4dd0-a65e-9a36db8c66df" datatype="buprojectfilter" application="0102"/><condition operator="null" attribute="TsProjGUID" application="0102"/></filter></filter><filter type="and"/></filter>""",
+
+        )
+        resp_data = self.fetch(URI_GRID_DATA, params=params)
         if "response" in resp_data:
             resp = resp_data.pop("response")
             # q = Q(resp.content)
@@ -88,8 +106,7 @@ class MinYuanClient(requests.Session):
         return resp_data
 
     def getUsers(self):
-        path = '/Kfxt/RWGL/Rwcl_Edit_Rwcl_Assign_UserTree.aspx'
-        resp_data = self.fetch(path)
+        resp_data = self.fetch(URI_USER_TREE)
         if "response" in resp_data:
             resp = resp_data.pop("response")
             stuff = resp.text
@@ -117,7 +134,6 @@ class MinYuanClient(requests.Session):
         return resp_data
 
     def getProblemList(self):
-        path = '/_grid/griddata.aspx'
         params = dict(
             xml="/Kfxt/ZSJF/JFWTCL_GRID_WCL_JfRoom.xml",
             gridId="appGrid",
@@ -140,7 +156,7 @@ class MinYuanClient(requests.Session):
             application="",
             cp="",
         )
-        resp_data = self.fetch(path, params=params)
+        resp_data = self.fetch(URI_GRID_DATA, params=params)
         if "response" in resp_data:
             resp = resp_data.pop("response")
             # q = Q(resp.content)
@@ -161,7 +177,6 @@ class MinYuanClient(requests.Session):
             workerGUID = 'b23e6df4-e2f7-e411-891a-e41f13c5183a' # 曹伟忠
         # ----------交付任务处理----------
         # POST
-        path = '/Kfxt/RWGL/Rwcl_Edit.aspx'
         params = dict(
             mode=1,
             tasksource=2,
@@ -176,7 +191,7 @@ class MinYuanClient(requests.Session):
             ProblemGUIDStr=problemGUID
         )
         # ----------任务编号----------
-        resp_data = self.fetch(path, params=params, data=data)
+        resp_data = self.fetch(URI_RWCL_EDIT, params=params, data=data)
         if "response" in resp_data:
             resp = resp_data.pop("response")
             # q = Q(resp.content)
@@ -205,12 +220,12 @@ def main():
     mingy = MinYuanClient("shenkai", "aaa111", addr=MINGYUAN_TEST_ADDR)
     s = '%3e&processNullFilter=1&customFilter=&customFilter2=&dependencySQLFilter=&location=&pageNum=1&pageSize=20&showPageCount=1&appName=Default&application=&cp= HTTP/1.1'
     # print urllib.unquote_plus(s)
-    problems =  mingy.getProblemList()
-    pid = problems["rows"][0].keys()[0]
-    print mingy.getTaskCode(pid)
+    # problems =  mingy.getProblemList()
+    # pid = problems["rows"][0].keys()[0]
+    # print mingy.getTaskCode(pid)
 
-    # print mingy.getReceiveList()
-    # mingy.getUsers()
+    print mingy.getReceiveList()
+    mingy.getUsers()
     # for i in my.getReceiveList()["receiveList"]:
     #     print ' '.join(i).encode('utf-8')
 if __name__ == '__main__':
