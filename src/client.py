@@ -2,7 +2,7 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-22 12:46:02
+# @Last Modified time: 2017-01-22 15:00:01
 import requests
 import random
 import hashlib
@@ -18,6 +18,8 @@ URI_LOGIN = '/Default_Login.aspx'
 URI_GRID_DATA = '/_grid/griddata.aspx'
 URI_USER_TREE = '/Kfxt/RWGL/Rwcl_Edit_Rwcl_Assign_UserTree.aspx'
 URI_RWCL_EDIT = '/Kfxt/RWGL/Rwcl_Edit.aspx'
+URI_RWCL_WORK = '/Kfxt/Rwgl/Rwcl_Edit_Rwcl_WorkForm.aspx'
+
 
 def handle_args():
     parser = argparse.ArgumentParser(description="MingYun CLI")
@@ -235,8 +237,10 @@ class MinYuanClient(requests.Session):
                         val = e.getText()
                     else:
                         val = e.attrs.get("value", "")
-                        if key == 'txtTaskCode':
-                            print 'txtTaskCode', val
+                        if key in {
+                            'txtTaskCode',
+                        }:
+                            print key, val
 
                     if isinstance(val, unicode):
                         val = val.encode('gb2312')
@@ -251,9 +255,12 @@ class MinYuanClient(requests.Session):
         return resp_data
 
     def transferTask(self, problemGUID, workerGUID=None):
+        """
+        return: {'taskguid':xx}
+        """
         data = self._preTransferTask(problemGUID, workerGUID)
         # print urllib.urlencode(data)
-        # return
+        # self.getTaskByCode(data["txtTaskCode"])
         params = dict(
             mode="1",
             tasksource="2",
@@ -263,7 +270,65 @@ class MinYuanClient(requests.Session):
             funcid="01020502",
         )
         resp_data = self.postUrl(URI_RWCL_EDIT, params=params, data=data)
+        if 'response' in resp_data:
+            resp = resp_data.pop('response')
+            soup = BeautifulSoup(resp.text, 'lxml')
+            e = soup.find(attrs={"name": "txtTaskGUID"})
+            if not e: return
+            resp_data["taskguid"] = e.attrs["value"]
+        return resp_data
 
+    def _createWorkSheet(self, taskguid):
+        params = dict(
+            mode="1",
+            type="touch",
+            taskguid=taskguid,
+            workguid="",
+            funcid="01020504",
+        )
+        data = dict(
+            problemGUID=problemGUID,
+        )
+
+        resp_data = self.postUrl(URI_RWCL_WORK, params=params, data=data)
+        if 'response' in resp_data:
+            resp = resp_data.pop("response")
+            # q = Q(resp.content)
+            soup = BeautifulSoup(resp.text, 'lxml')
+            # ---------- Prepare Params for Transfering Task ----------
+            for key in {
+                "__VIEWSTATE", "txtWorkCode", "txtForeAction", "txtForePara", 
+                "txtBackAction", "txtTaskGUID", "txtWorkGUID", "txtProblemGUIDStr",
+                "txtTsProjGUID", "TxtBdsxDate", "txtWorkType", "txtClStatus",
+                "txtTaskType", "txtTaskSource", "txtProblemPower", "txtZrdwGUID", 
+                "txtToDw", "txtZrDw", "txtProviderName", "txtProviderGUID", "txtFxdd",
+                "txtCheckPlace", "txtWorkContent", "txtClfa", "txtJdr",
+                "txtHandSet", "txtPdr", "txtPdDate",
+            }:
+                e = soup.find(attrs={"name": key})
+                if e:
+                    val = e.attrs.get("value", "")
+                    if isinstance(val, unicode):
+                        val = val.encode('gb2312')
+                    else:
+                        val = val.decode('utf-8').encode('gb2312')
+                    resp_data[key] = val
+            resp_data.update(dict(
+                __EVENTTARGET="__Submit",
+                __EVENTARGUMENT="1",
+            ))
+        return resp_data
+
+    def arrangeTask(self, taskguid):
+        data = self._createWorkSheet(taskguid)
+        params = dict(
+            mode="1",
+            type="touch",
+            taskguid=taskguid,
+            workguid="",
+            funcid="01020504",
+        )
+        self.postUrl(URI_RWCL_WORK, params=params, data=data)
 def main():
     """
     视图(xml)：
@@ -283,7 +348,8 @@ def main():
     if pbs:
         pid = pbs[0].keys()[0]
         print pid
-        mingy.transferTask(pid)
+        data =  mingy.transferTask(pid)
+        mingy.arrangeTask(data["taskguid"], data["problemGUID"])
     # resp_data = mingy.fetch('/Kfxt/PUB/Verify_Public.aspx?p_Func=%u4EFB%u52A1%u7BA1%u7406&p_Mode=%u95EE%u9898%u89E3%u9501&rdnum=0.17257182981973673')
     # print resp_data["response"].text.encode('utf-8')
     # print mingy.getReceiveList()
