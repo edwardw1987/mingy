@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
-# @Last Modified by:   edward
-# @Last Modified time: 2017-01-21 23:51:26
+# @Last Modified by:   wangwh8
+# @Last Modified time: 2017-01-22 12:46:02
 import requests
 import random
 import hashlib
@@ -224,13 +224,27 @@ class MinYuanClient(requests.Session):
                 "txtSlDate", "txtSlr", "txtZrr", "txtTopic", "txtContent", "txtZzJjfa",
             }:
                 e = soup.find(attrs={"name": key})
+
                 if e:
-                    resp_data[key] = e.attrs.get("value", "")
-            iframe = soup.find(attrs=dict(id='_AppUpFile_frmFile'))
-            if iframe:
-                resp_data["_AppUpFile_frmFile"] = iframe.attrs["src"]
+                    if key == 'ddlTaskLevel':
+                        selected = e.find(attrs={"selected": "selected"})
+                        val = selected.attrs["value"]
+                    elif key == 'ddlTaskType':
+                        val = u'地产保修'
+                    elif key == 'txtContent':
+                        val = e.getText()
+                    else:
+                        val = e.attrs.get("value", "")
+                        if key == 'txtTaskCode':
+                            print 'txtTaskCode', val
+
+                    if isinstance(val, unicode):
+                        val = val.encode('gb2312')
+                    else:
+                        val = val.decode('utf-8').encode('gb2312')
+                    resp_data[key] = val
             resp_data.update(dict(
-                __btnUpFile="上 传",
+                __btnUpFile=u"上 传".encode("gb2312"),
                 __EVENTTARGET="__Submit",
                 __EVENTARGUMENT="2",
             ))
@@ -238,6 +252,8 @@ class MinYuanClient(requests.Session):
 
     def transferTask(self, problemGUID, workerGUID=None):
         data = self._preTransferTask(problemGUID, workerGUID)
+        # print urllib.urlencode(data)
+        # return
         params = dict(
             mode="1",
             tasksource="2",
@@ -247,8 +263,6 @@ class MinYuanClient(requests.Session):
             funcid="01020502",
         )
         resp_data = self.postUrl(URI_RWCL_EDIT, params=params, data=data)
-        self.fetch(data["_AppUpFile_frmFile"])
-        print resp_data["response"]
 
 def main():
     """
@@ -263,12 +277,13 @@ def main():
     """
     mingy = MinYuanClient("shenkai", "aaa111", addr=MINGYUAN_TEST_ADDR)
     # print urllib.unquote_plus(s)
-    problems =  mingy.getProblemList()
+    problems = mingy.getProblemList()
     print len(problems["rows"])
     pbs = problems.get("rows")
     if pbs:
         pid = pbs[0].keys()[0]
-        print mingy.transferTask(pid)
+        print pid
+        mingy.transferTask(pid)
     # resp_data = mingy.fetch('/Kfxt/PUB/Verify_Public.aspx?p_Func=%u4EFB%u52A1%u7BA1%u7406&p_Mode=%u95EE%u9898%u89E3%u9501&rdnum=0.17257182981973673')
     # print resp_data["response"].text.encode('utf-8')
     # print mingy.getReceiveList()
