@@ -6,6 +6,7 @@ Flask==0.12
 itsdangerous==0.24
 Jinja2==2.9.4
 MarkupSafe==0.23
+requests==2.12.5
 singledispatch==3.4.0.3
 six==1.10.0
 tornado==4.4.2
