@@ -177,9 +177,9 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
     def _SyncReceiveList(self, *args, **kwargs):
         event = args[0]
         my = MinYuanClient()
-        data = my.getReceiveList(page_size=30)
-        if "receiveList" in data:
-            rl = data["receiveList"]
+        data = my.getJdjl(page_size=30)
+        if "Jdjl" in data:
+            rl = data["Jdjl"]
             signal = self.LC.AddRows(rl)
             if signal and getattr(event, 'auto', False):
             # ----- 弹窗提醒用户有待分解的记录

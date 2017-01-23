@@ -2,7 +2,7 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-23 15:46:04
+# @Last Modified time: 2017-01-23 16:32:29
 import requests
 import random
 import hashlib
@@ -90,12 +90,11 @@ class MinYuanClient(requests.Session):
         if not fr:
             raise Exception("login failed")
 
-    def getReceiveList(self, page_size=20, page_num=1):
+    def getJdjl(self, page_num=1, page_size=20):
         """
-
         :param page_size:
         :param page_num:
-        :return: {"receiveList": [], "errMsg": xx}
+        :return: {"Jdjl": [], "errMsg": xx}
         """
         params = dict(
             xml="/Kfxt/RWGL/Jdjl_Grid.xml",  # <= 所有记录, Jdjl_Grid_My.xml 我的记录
@@ -345,7 +344,7 @@ class MinYuanClient(requests.Session):
         )
         self.postUrl(URI_RWCL_WORK, params=params, data=data)
 
-    def getJFTaskList(self, project_id, task_code=None):
+    def getJFTaskList(self, project_id, task_code=None, page_num=1, page_size=20):
         """
             获取交付任务列表
             return [{'taskguid': xx, 'display': (xx,...)}...]
@@ -365,14 +364,13 @@ class MinYuanClient(requests.Session):
             customFilter2="",
             dependencySQLFilter="",
             location="",
-            pageNum="1",
-            pageSize="18",
+            pageNum=page_num,
+            pageSize=page_size,
             showPageCount="1",
             appName="Default",
             application="",
             cp="",
         )
-
         resp_data = self.fetch(URI_GRID_DATA, params=params)
         if 'response' in resp_data:
             response = resp_data.pop('response')
