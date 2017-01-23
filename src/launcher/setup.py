@@ -16,14 +16,14 @@ options = {"py2exe":
       }
 setup( 
 version = "0.1",
-description = "Ride Launcher",
-name = "Ride Launcher",
+description = "WX Launcher",
+name = "WX Launcher",
 options = options,
 zipfile=None,
 # console=['winss.py']
 #data_files= [('images', ['bing.ico'])],
 windows=[{"script":"launcher.py",
-          "icon_resources": [(1,"robot.ico")]}]  
+          "icon_resources": [(1,"rat_head.ico")]}]  
 )
 
 # copy executable to the directory of RideIDE
