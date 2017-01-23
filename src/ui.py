@@ -5,7 +5,7 @@ from mixin import constructor
 from collections import OrderedDict
 import json
 import os
-from client import MinYuanClient
+from rest.client import MinYuanClient
 import  wx.lib.mixins.listctrl  as  listmix
 import images
 from event import CountEvent, EVT_COUNT, CountingThread
