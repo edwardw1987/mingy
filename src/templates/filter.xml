@@ -1,0 +1,6 @@
+<filter type="and">
+    <condition operator="in" attribute="TsProjGUID" value="{{ tsProjGUID }}" />
+{% if taskcode %}
+    <condition attribute="taskcode" operator="like" datatype="varchar" value="{{ taskcode }}" />
+{% endif %}
+</filter>
