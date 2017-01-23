@@ -5,7 +5,7 @@ from mixin import constructor
 from collections import OrderedDict
 import json
 import os
-from rest.client import MinYuanClient
+from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 import  wx.lib.mixins.listctrl  as  listmix
 import images
 from event import CountEvent, EVT_COUNT, CountingThread
@@ -176,7 +176,7 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
 
     def _SyncReceiveList(self, *args, **kwargs):
         event = args[0]
-        my = MinYuanClient()
+        my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
         data = my.getJdjl(page_size=30)
         if "Jdjl" in data:
             rl = data["Jdjl"]

@@ -2,7 +2,7 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-23 16:32:29
+# @Last Modified time: 2017-01-23 17:33:45
 import requests
 import random
 import hashlib
@@ -44,7 +44,7 @@ def get_soup(html):
     return BeautifulSoup(html, 'lxml')
 
 class MinYuanClient(requests.Session):
-    default_usr = "shenkai"
+    default_usr = "wubin1"
     default_pwd = "aaa111"
 
     def __init__(self, username=None, password=None, addr=MINGYUAN_OFFICIAL_ADDR):
@@ -126,11 +126,11 @@ class MinYuanClient(requests.Session):
             table = soup.find(attrs={"id": "gridBodyTable"})
             if not table:
                 return resp_data
-            receive_list = []
+            rows = []
             for tr in table.find_all(name="tr"):
                 r = [td.getText() for td in tr.find_all(name="td")[3:]]
-                receive_list.append(tuple(r))
-            resp_data["receiveList"] = receive_list
+                rows.append(tuple(r))
+            resp_data["Jdjl"] = rows
         return resp_data
 
     def getUsers(self):
