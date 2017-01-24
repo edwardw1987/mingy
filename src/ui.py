@@ -138,7 +138,6 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         self.Bind(EVT_COUNT, self.OnCount)
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
         self.Center()
-        self.SetTitle(self.const["weixin_demo_title"])
 
     def _initMenuBar(self):
         _OD = OrderedDict()

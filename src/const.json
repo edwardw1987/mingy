@@ -1,5 +1,5 @@
 {
-    "weixin_demo_title": "明源自动化客户端",
+    "weixin_demo_title": "明源自动化客户端v%s",
     "menubar": [
         {"title": "操作(&O)", "items": ["同步数据\tCtrl+S", "自动同步", "退出\tCtrl+Q"]},
         {"title": "查看(&V)", "items": ["窗口置顶"]},
@@ -12,7 +12,7 @@
     "sync_error_title": "连接错误",
     "sync_start_msg": "正在同步数据......",
     "sync_end_msg":"数据同步成功",
-    "update_msg": "作者发布了新版本, 是否更新?",
+    "update_msg": "作者发布了新版本v%s, 是否更新?",
     "update_title": "版本更新"
 
 }
