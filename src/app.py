@@ -5,6 +5,7 @@ import rest
 import githubapi
 import subprocess
 from launcher import launcher
+import threading
 
 GITHUB_OWNER = 'edwardw1987'
 GITHUB_REPO = 'mingy'
@@ -31,6 +32,7 @@ class MingYuanApp(wx.App):
                                    wx.OK | wx.ICON_ERROR)
             dlg.ShowModal()
             dlg.Destroy()
+            self.fr.Destroy()
             return -1
         lr_version = lr.get("tag_name", "0.3")
         if lr_version == VERSION:
@@ -72,27 +74,29 @@ class MingYuanApp(wx.App):
             # dlg.Destroy()
             global restart_app
             restart_app = True
+            self.fr.Destroy()
             return 0
             # githubapi.updateByZipball(lr["zipball_url"])
         dlg.Destroy()
         return 1
 
     def OnInit(self):
-        signal = self.doUpdate()
-        if signal == 1:
-            fr = ui.Frame(
-                None,
-                title=self.const["weixin_demo_title"] % VERSION,
-                icon=ui.path_join('launcher/rat_head.ico'),
-                size=(1200, 600),
-                minsize=(400, 300),
-            )
-            fr.Show()
+        self.fr = ui.Frame(
+            None,
+            title=self.const["weixin_demo_title"] % VERSION,
+            icon=ui.path_join('launcher/rat_head.ico'),
+            size=(1200, 600),
+            minsize=(400, 300),
+        )
+        self.fr.Show()
+        # signal = self.doUpdate()
         return True
 
 
 def main():
     app = MingYuanApp()
+    t = threading.Thread(target=app.doUpdate)
+    t.start()
     app.MainLoop()
     if restart_app:
         launcher.main()
