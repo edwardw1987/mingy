@@ -3,3 +3,4 @@ countdown/
 build/
 dist/
 env/
+*.log

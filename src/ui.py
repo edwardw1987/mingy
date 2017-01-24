@@ -11,9 +11,13 @@ import images
 from event import CountEvent, EVT_COUNT, CountingThread
 from datetime import datetime
 BaseDir = os.path.dirname(__file__)
+
+def path_join(*path):
+    return os.path.join(BaseDir, *path)
+
 def get_const():
-    constfilepath = os.path.join(BaseDir, "const.json")
-    constfilepy = os.path.join(BaseDir, "const.py")
+    constfilepath = path_join("const.json")
+    constfilepy = path_join("const.py")
     try:
         import const
     except ImportError:

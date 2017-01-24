@@ -2,11 +2,12 @@
 # @Author: wangwh8
 # @Date:   2017-01-19 10:26:46
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-19 12:49:37
+# @Last Modified time: 2017-01-24 11:48:35
 import requests
 import tempfile
 import zipfile
 import os
+from requests.exceptions import ConnectTimeout
 
 GITHUB_API_HOST = 'api.github.com'
 
@@ -24,10 +25,18 @@ def getLatestRelease(owner, repo):
     """
     path = '/repos/:owner/:repo/releases/latest'
     requestURI =  make_url(**locals())
-    resp = requests.get(requestURI)
-    return resp.json()
+    ret = {}
+    try:
+        resp = requests.get(requestURI)
+        ret.update(resp.json())
+    except ConnectTimeout:
+        ret["errMsg"] = ConnectTimeout.__name__
+    except Exception as e:
+        ret["errMsg"] = e
+    return ret
 
-def downloadZipBall(zipball_url):
+
+def updateByZipball(zipball_url):
     resp = requests.get(zipball_url, stream=True)
     contentLen = int(resp.headers["Content-Length"])
     remains = contentLen
@@ -53,4 +62,4 @@ def extract(zip_file, output_dir):
 if __name__ == '__main__':
     lr =  getLatestRelease("edwardw1987", "tool")
     # print lr["tag_name"]
-    downloadZipBall(lr["zipball_url"])
+    updateByZipball(lr["zipball_url"])
