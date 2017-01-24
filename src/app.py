@@ -1,8 +1,9 @@
 # coding:utf-8
 import wx
 import ui
-# from countdown import resource
+import os
 from rest import launch_server
+
 
 launch_server()
 
@@ -10,7 +11,7 @@ class MingYuanApp(wx.App):
     def OnInit(self):
         fr = ui.Frame(
             None,
-            # icon=resource.rat_head_original.getIcon(),
+            icon=os.path.join(os.path.dirname(__file__), 'launcher/rat_head.ico'),
             size=(1200, 600),
             minsize=(400, 300),
         )

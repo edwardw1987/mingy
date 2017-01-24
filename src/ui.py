@@ -18,6 +18,7 @@ def get_const():
         import const
     except ImportError:
         jsondict = json.load(open(constfilepath))
+        return jsondict
         with open(constfilepy, 'w') as outf:
             outf.write("json=%s" % jsondict)
         from . import const

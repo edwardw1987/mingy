@@ -1,5 +1,5 @@
 {
-    "weixin_demo_title": "明源微信通道提醒-Demo",
+    "weixin_demo_title": "明源自动化客户端",
     "menubar": [
         {"title": "操作(&O)", "items": ["同步数据\tCtrl+S", "自动同步", "退出\tCtrl+Q"]},
         {"title": "查看(&V)", "items": ["窗口置顶"]},

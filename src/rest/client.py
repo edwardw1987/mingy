@@ -2,7 +2,7 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-23 17:33:45
+# @Last Modified time: 2017-01-24 10:41:00
 import requests
 import random
 import hashlib
@@ -41,7 +41,7 @@ def init_filter(project_id, task_code=None):
     return render_template("filter.xml", **locals())
     
 def get_soup(html):
-    return BeautifulSoup(html, 'lxml')
+    return BeautifulSoup(html, 'html.parser')
 
 class MinYuanClient(requests.Session):
     default_usr = "wubin1"
@@ -85,7 +85,7 @@ class MinYuanClient(requests.Session):
             "password": hashlib.md5(password).hexdigest(),
             "rdnum": random.random()
         })
-        soup = BeautifulSoup(resp["response"].content, 'lxml')
+        soup = get_soup(resp["response"].content)
         fr = soup.find(attrs={"result": "true"})
         if not fr:
             raise Exception("login failed")
@@ -122,7 +122,7 @@ class MinYuanClient(requests.Session):
         if "response" in resp_data:
             resp = resp_data.pop("response")
             # q = Q(resp.content)
-            soup = BeautifulSoup(resp.text, 'lxml')
+            soup = get_soup(resp.text)
             table = soup.find(attrs={"id": "gridBodyTable"})
             if not table:
                 return resp_data
@@ -141,7 +141,7 @@ class MinYuanClient(requests.Session):
             startPos = stuff.find('<table class="layout"')
             if startPos == -1:
                 return resp_data
-            soup = BeautifulSoup(stuff[startPos:], 'xml')
+            soup = get_soup(stuff[startPos:])
             users = []
             uuidset = set()
             for tr in soup.select("tr[allowselect='1']"):
@@ -188,7 +188,7 @@ class MinYuanClient(requests.Session):
         if "response" in resp_data:
             resp = resp_data.pop("response")
             # q = Q(resp.content)
-            soup = BeautifulSoup(resp.text, 'lxml')
+            soup = get_soup(resp.text)
             table = soup.find(attrs={"id": "gridBodyTable"})
             if not table:
                 return resp_data
@@ -222,7 +222,7 @@ class MinYuanClient(requests.Session):
         if "response" in resp_data:
             resp = resp_data.pop("response")
             # q = Q(resp.content)
-            soup = BeautifulSoup(resp.text, 'lxml')
+            soup = get_soup(resp.text)
             # ---------- Prepare Params for Transfering Task ----------
             for key in {
                 "__VIEWSTATE", "txtTaskCode", "txtClStatus", "txtForeAction",
@@ -286,7 +286,7 @@ class MinYuanClient(requests.Session):
         resp_data = self.postUrl(URI_RWCL_EDIT, params=params, data=data)
         if 'response' in resp_data:
             resp = resp_data.pop('response')
-            soup = BeautifulSoup(resp.text, 'lxml')
+            soup = get_soup(resp.text)
             e = soup.find(attrs={"name": "txtTaskGUID"})
             if not e: return
             resp_data["taskguid"] = e.attrs["value"]
@@ -308,7 +308,7 @@ class MinYuanClient(requests.Session):
         if 'response' in resp_data:
             resp = resp_data.pop("response")
             # q = Q(resp.content)
-            soup = BeautifulSoup(resp.text, 'lxml')
+            soup = get_soup(resp.text)
             # ---------- Prepare Params for Transfering Task ----------
             for key in {
                 "__VIEWSTATE", "txtWorkCode", "txtForeAction", "txtForePara", 
