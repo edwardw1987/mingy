@@ -14,6 +14,7 @@ import images
 from event import EVT_COUNT, CountingThread
 from mixin import constructor
 from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
+import githubapi
 
 # --------------------
 BaseDir = os.path.dirname(__file__)
@@ -380,4 +381,5 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
             (keepGoing, skip) = dlg.Update(count,
                 '%s/%sk' % (count, max))
 
+        githubapi.extract(tf, '.')
         dlg.Destroy()
