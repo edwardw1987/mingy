@@ -81,20 +81,19 @@ class ModalContext(object):
 
 class RestartContext(object):
     def __init__(self):
-        self._restart = False
         self._set = False
 
     def is_set(self):
         return self._set
 
-    def __enter__(self):
+    def __enter__(self, *args, **kw):
         pass
 
     def set(self):
         self._set = True
     
-    def __exit__(self):
-        self._restart = False
+    def __exit__(self, *args, **kw):
+        self._set = False
 
 restart_ctx = RestartContext()
 modal_context = ModalContext()

@@ -26,7 +26,7 @@ def main():
     app.fr.asyncUpdate()
     app.MainLoop()
     if ui.restart_ctx.is_set():
-        with restart_ctx:
+        with ui.restart_ctx:
             launcher.main()
 
 
