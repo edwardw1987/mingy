@@ -17,7 +17,7 @@ from mixin import constructor
 from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 # --------------------
 
-VERSION = '0.4'
+VERSION = '0.7'
 # --------------------
 BaseDir = os.path.dirname(__file__)
 
