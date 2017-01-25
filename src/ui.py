@@ -2,17 +2,20 @@
 
 import json
 import os
+import tempfile
 from collections import OrderedDict
 from datetime import datetime
 
+import requests
 import wx
-import wx.lib.mixins.listctrl  as  listmix
+import wx.lib.mixins.listctrl as listmix
 
 import images
-from event import EVT_COUNT, CountingThread
+from event import EVT_COUNT, CountingThread, EVT_UPDATE, UpdatingThread
 from mixin import constructor
 from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 
+# --------------------
 BaseDir = os.path.dirname(__file__)
 
 
@@ -78,6 +81,8 @@ class ModalContext(object):
 modal_context = ModalContext()
 
 
+
+
 @constructor
 class MenuItem(wx.MenuItem):
     pass
@@ -138,7 +143,14 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
     def columnNum(self):
         return len(self.const["headings"])
 
+    def push_thread(self, thread):
+        self._threads.append(thread)
+
+    def get_threads(self):
+        return self._threads
+
     def construct(self):
+        self._threads = []
         self._initListCtrl()
         self._initMenuBar()
         # self._initToolbar()
@@ -151,6 +163,7 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         # self.Layout()
         # ----------
         self.Bind(EVT_COUNT, self.OnCount)
+        self.Bind(EVT_UPDATE, self.OnUpdate)
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
         self.Center()
 
@@ -298,6 +311,9 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         if getattr(self, "syncThd", None) and \
                 not self.syncThd.stopped():
             self.syncThd.stop()
+        for thd in self.get_threads():
+            if not thd.stopped():
+                thd.stop()
         self.Destroy()
 
     def OnSwitchTop(self, e):
@@ -322,6 +338,9 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
             e.auto = True
             self.OnSyncData(e)
 
+    def OnUpdate(self, e):
+        e.GetValue()
+
     def OnToggleAutoSync(self, e):
         if e.IsChecked():
             thd = CountingThread(self, (1, 1))
@@ -330,3 +349,35 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         else:
             if not self.syncThd.stopped():
                 self.syncThd.stop()
+
+    def popUpPD(self, ):
+        max = 80
+        self.pd = dlg = wx.ProgressDialog(self.const["update_title"],
+                                "updating...",
+                                maximum=max,
+                                parent=None,
+                                style=0
+                                | wx.PD_APP_MODAL
+                                #| wx.PD_CAN_ABORT
+                                #| wx.PD_CAN_SKIP
+                                #| wx.PD_ELAPSED_TIME
+                                | wx.PD_ESTIMATED_TIME
+                                | wx.PD_REMAINING_TIME
+                                | wx.PD_AUTO_HIDE
+                                )
+
+        thd = UpdatingThread(self, )
+        # keepGoing = True
+        # count = 0
+        #
+        # while keepGoing and count < max:
+        #     count += 1
+        #     wx.MilliSleep(250)
+        #     wx.Yield()
+        #
+        #     if count >= max / 2:
+        #         (keepGoing, skip) = dlg.Update(count, "Half-time!")
+        #     else:
+        #         (keepGoing, skip) = dlg.Update(count)
+        #
+        # dlg.Destroy()

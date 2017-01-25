@@ -3,13 +3,19 @@
 # @Date:   2016-07-24 02:22:41
 # @Last Modified by:   edward
 # @Last Modified time: 2016-07-24 16:49:15
+import tempfile
+
 import wx
 import threading
 import time
+import requests
 
 
 myEVT_COUNT = wx.NewEventType()
 EVT_COUNT = wx.PyEventBinder(myEVT_COUNT, 1)
+myEVT_UPDATE = wx.NewEventType()
+EVT_UPDATE = wx.PyEventBinder(myEVT_UPDATE, 1)
+
 class CountEvent(wx.PyCommandEvent):
     """Event to signal that a count value is ready"""
     def __init__(self, etype, eid, value=None):
@@ -23,6 +29,9 @@ class CountEvent(wx.PyCommandEvent):
 
         """
         return self._value
+
+class UpdateEvent(CountEvent):
+    pass
 
 class StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
@@ -48,6 +57,12 @@ class CountingThread(StoppableThread):
         self._parent = parent
         self._value = value
 
+    def get_parent(self):
+        return self._parent
+
+    def get_value(self):
+        return self._value
+
     def run(self):
         """Overrides Thread.run. Don't call this directly its called internally
         when you call Thread.start().
@@ -61,3 +76,23 @@ class CountingThread(StoppableThread):
                 wx.PostEvent(self._parent, evt)
             time.sleep(1) # our simulated calculation time
             s += 1
+
+
+class UpdatingThread(CountingThread):
+    def run(self):
+        zipball_url = self.get_value()
+        parent = self.get_parent()
+
+        resp = requests.get(zipball_url, stream=True)
+        contentLen = int(resp.headers["Content-Length"])
+        remains = contentLen
+        print 'Content-length:', contentLen
+        tf = tempfile.NamedTemporaryFile(suffix=".zip")
+        print tf.name
+        for _b in resp.iter_content(chunk_size=1024):
+            tf.write(_b)
+            remains -= 1024
+            info = 'Remains:', "%.2f" % ((contentLen - remains) * 100 / float(contentLen)), '%'
+            evt = UpdateEvent(myEVT_UPDATE, -1, info)
+            wx.PostEvent(parent, evt)
+        print 'Finished 100 %'
