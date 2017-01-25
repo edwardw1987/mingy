@@ -10,7 +10,7 @@ from launcher import launcher
 GITHUB_OWNER = 'edwardw1987'
 GITHUB_REPO = 'mingy'
 # rest.launch_server()
-VERSION = '0.2'
+VERSION = '0.3'
 restart_app = False
 
 
@@ -50,8 +50,8 @@ class MingYuanApp(wx.App):
                                wx.CANCEL | wx.ICON_INFORMATION)
         if wx.ID_OK == dlg.ShowModal():
             dlg.Destroy()
-            print lr
-            self.fr.popUpPD(lr["zipball_url"])
+            self.fr.Hide()
+            self.fr.popUpUpdatePD(lr["zipball_url"])
             global restart_app
             restart_app = True
             self.fr.Destroy()

@@ -11,7 +11,7 @@ import wx
 import wx.lib.mixins.listctrl as listmix
 
 import images
-from event import EVT_COUNT, CountingThread, EVT_UPDATE, UpdatingThread
+from event import EVT_COUNT, CountingThread
 from mixin import constructor
 from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 
@@ -79,8 +79,6 @@ class ModalContext(object):
 
 
 modal_context = ModalContext()
-
-
 
 
 @constructor
@@ -163,7 +161,6 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         # self.Layout()
         # ----------
         self.Bind(EVT_COUNT, self.OnCount)
-        self.Bind(EVT_UPDATE, self.OnUpdate)
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
         self.Center()
 
@@ -350,34 +347,37 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
             if not self.syncThd.stopped():
                 self.syncThd.stop()
 
-    def popUpPD(self, ):
-        max = 80
-        self.pd = dlg = wx.ProgressDialog(self.const["update_title"],
+    def popUpUpdatePD(self, url):
+        resp = requests.get(url, stream=True)
+        clen = int(resp.headers["Content-Length"])
+        size = 1024
+        max = int(float(clen)/size)
+        dlg = wx.ProgressDialog(self.const["update_title"],
                                 "updating...",
                                 maximum=max,
                                 parent=None,
                                 style=0
-                                | wx.PD_APP_MODAL
-                                #| wx.PD_CAN_ABORT
-                                #| wx.PD_CAN_SKIP
-                                #| wx.PD_ELAPSED_TIME
-                                | wx.PD_ESTIMATED_TIME
-                                | wx.PD_REMAINING_TIME
-                                | wx.PD_AUTO_HIDE
+                                      | wx.PD_APP_MODAL
+                                      # | wx.PD_CAN_ABORT
+                                      # | wx.PD_CAN_SKIP
+                                      # | wx.PD_ELAPSED_TIME
+                                      | wx.PD_ESTIMATED_TIME
+                                      | wx.PD_REMAINING_TIME
+                                      | wx.PD_AUTO_HIDE
                                 )
+        keepGoing = True
+        count = 0
+        tf = tempfile.NamedTemporaryFile(suffix=".zip")
+        stream_gen = resp.iter_content(chunk_size=size)
+        while keepGoing and count < max:
+            _b = next(stream_gen, None)
+            if _b:
+                tf.write(_b)
+            count += 1
+            # wx.MilliSleep(250)
+            wx.Yield()
 
-        thd = UpdatingThread(self, )
-        # keepGoing = True
-        # count = 0
-        #
-        # while keepGoing and count < max:
-        #     count += 1
-        #     wx.MilliSleep(250)
-        #     wx.Yield()
-        #
-        #     if count >= max / 2:
-        #         (keepGoing, skip) = dlg.Update(count, "Half-time!")
-        #     else:
-        #         (keepGoing, skip) = dlg.Update(count)
-        #
-        # dlg.Destroy()
+            (keepGoing, skip) = dlg.Update(count,
+                '%s/%sk' % (count, max))
+
+        dlg.Destroy()
