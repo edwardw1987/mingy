@@ -3,6 +3,7 @@
 import json
 import os
 import tempfile
+import threading
 from collections import OrderedDict
 from datetime import datetime
 
@@ -10,12 +11,15 @@ import requests
 import wx
 import wx.lib.mixins.listctrl as listmix
 
+import githubapi
 import images
 from event import EVT_COUNT, CountingThread
 from mixin import constructor
 from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
-import githubapi
 
+# --------------------
+
+VERSION = '0.2'
 # --------------------
 BaseDir = os.path.dirname(__file__)
 
@@ -164,6 +168,7 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         self.Bind(EVT_COUNT, self.OnCount)
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
         self.Center()
+        self.SetTitle(self.getTitle())
 
     def _initMenuBar(self):
         _OD = OrderedDict()
@@ -349,10 +354,11 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
                 self.syncThd.stop()
 
     def popUpUpdatePD(self, url):
+        print url
         resp = requests.get(url, stream=True)
         clen = int(resp.headers["Content-Length"])
         size = 1024
-        max = int(float(clen)/size)
+        max = int(float(clen) / size)
         dlg = wx.ProgressDialog(self.const["update_title"],
                                 "updating...",
                                 maximum=max,
@@ -366,20 +372,62 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
                                       | wx.PD_REMAINING_TIME
                                       | wx.PD_AUTO_HIDE
                                 )
-        keepGoing = True
         count = 0
-        tf = tempfile.NamedTemporaryFile(suffix=".zip")
-        stream_gen = resp.iter_content(chunk_size=size)
-        while keepGoing and count < max:
-            _b = next(stream_gen, None)
-            if _b:
-                tf.write(_b)
+        keepGoing = True
+        tf = tempfile.TemporaryFile(suffix=".zip")
+        for _b in resp.iter_content(chunk_size=size):
+            tf.write(_b)
             count += 1
             # wx.MilliSleep(250)
-            wx.Yield()
-
-            (keepGoing, skip) = dlg.Update(count,
-                '%s/%sk' % (count, max))
-
+            # wx.Yield()
+            if keepGoing and count <= max:
+                (keepGoing, skip) = dlg.Update(count,
+                                               '%s/%sk' % (count, max))
+            # if not (keepGoing and count < max):
         githubapi.extract(tf, '.')
         dlg.Destroy()
+
+    def asyncUpdate(self):
+        thd = threading.Thread(target=self._doUpdate)
+        self.push_thread(thd)
+        thd.start()
+
+    def _doUpdate(self):
+        """
+            return int
+                0 update successfully
+                1 update canceled or no need to update
+                -1 connection error
+            The program has to be restarted once the source code files updated.
+
+        """
+        lr = githubapi.getLatestRelease()
+        if 'errMsg' in lr:
+            dlg = wx.MessageDialog(None,
+                                   self.const["sync_error_msg"],
+                                   self.const["sync_error_title"],
+                                   wx.OK | wx.ICON_ERROR)
+            dlg.ShowModal()
+            dlg.Destroy()
+            self.Destroy()
+            return -1
+        lr_version = lr.get("tag_name", "0.3")
+        if lr_version == VERSION:
+            return 1
+        dlg = wx.MessageDialog(None,
+                               self.const["update_msg"] % lr_version,
+                               self.const["update_title"],
+                               wx.CANCEL | wx.ICON_INFORMATION)
+        if wx.ID_OK == dlg.ShowModal():
+            dlg.Destroy()
+            self.Hide()
+            self.popUpUpdatePD(lr["zipball_url"])
+            global restart_app
+            restart_app = True
+            self.Destroy()
+            return 0
+        dlg.Destroy()
+        return 1
+
+    def getTitle(self):
+        return self.const["weixin_demo_title"] % VERSION

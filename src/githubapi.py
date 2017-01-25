@@ -2,7 +2,7 @@
 # @Author: wangwh8
 # @Date:   2017-01-19 10:26:46
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-24 11:48:35
+# @Last Modified time: 2017-01-25 15:21:58
 import requests
 import tempfile
 import zipfile
@@ -10,6 +10,8 @@ import os
 from requests.exceptions import ConnectTimeout
 
 GITHUB_API_HOST = 'api.github.com'
+GITHUB_OWNER = 'edwardw1987'
+GITHUB_REPO = 'mingy'
 
 def make_url(path, **kwargs):
     for key, val in kwargs.items():
@@ -18,7 +20,7 @@ def make_url(path, **kwargs):
         raise ValueError('invalid path:' + path)
     return "http://%s%s" % (GITHUB_API_HOST, path)
 
-def getLatestRelease(owner, repo):
+def getLatestRelease(owner=GITHUB_OWNER, repo=GITHUB_REPO):
     """
     param: owner
     param: repo
@@ -60,6 +62,6 @@ def extract(zip_file, output_dir):
   for f in f_zip.namelist():
     f_zip.extract(f, os.path.join(output_dir, 'bak'))
 if __name__ == '__main__':
-    lr =  getLatestRelease("edwardw1987", "tool")
+    lr =  getLatestRelease()
     # print lr["tag_name"]
     updateByZipball(lr["zipball_url"])
