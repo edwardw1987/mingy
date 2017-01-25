@@ -2,7 +2,7 @@
 # @Author: wangwh8
 # @Date:   2017-01-19 10:26:46
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-25 17:15:45
+# @Last Modified time: 2017-01-25 17:18:12
 import requests
 import tempfile
 import zipfile
@@ -75,7 +75,8 @@ def replaceSourceWith(zip_file, root_dir):
     dest_dir = root_dir
     print dest_dir
     for i in os.listdir(to_copy_src_dir):
-        shutil.copy(i, root_dir + '\\' + i.rsplit('\\')[-1])
+        fp = os.path.join(to_copy_src_dir, i)
+        shutil.copy(fp, root_dir + '\\' + i.rsplit('\\')[-1])
     # shutil.copytree(to_copy_src_dir, dest_dir)
     #   f_zip.extract(f, os.path.join(output_dir, 'bak'))
 if __name__ == '__main__':
