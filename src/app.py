@@ -1,11 +1,11 @@
 # coding:utf-8
-import wx
-import ui
-import rest
-import githubapi
-import subprocess
-from launcher import launcher
 import threading
+
+import wx
+
+import githubapi
+import ui
+from launcher import launcher
 
 GITHUB_OWNER = 'edwardw1987'
 GITHUB_REPO = 'mingy'
@@ -13,9 +13,16 @@ GITHUB_REPO = 'mingy'
 VERSION = '0.2'
 restart_app = False
 
+
 class MingYuanApp(wx.App):
     const = ui.get_const()
-    def doUpdate(self):
+
+    def asyncUpdate(self):
+        t = threading.Thread(target=self._doUpdate)
+        t.setDaemon(True)
+        t.start()
+
+    def _doUpdate(self):
         """
             return int
                 0 update successfully
@@ -89,17 +96,16 @@ class MingYuanApp(wx.App):
             minsize=(400, 300),
         )
         self.fr.Show()
-        # signal = self.doUpdate()
         return True
 
 
 def main():
     app = MingYuanApp()
-    t = threading.Thread(target=app.doUpdate)
-    t.start()
+    app.asyncUpdate()
     app.MainLoop()
     if restart_app:
         launcher.main()
+
 
 if __name__ == "__main__":
     main()

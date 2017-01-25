@@ -1,19 +1,24 @@
 # coding:utf-8
 
-import wx
-from mixin import constructor
-from collections import OrderedDict
 import json
 import os
-from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
-import  wx.lib.mixins.listctrl  as  listmix
-import images
-from event import CountEvent, EVT_COUNT, CountingThread
+from collections import OrderedDict
 from datetime import datetime
+
+import wx
+import wx.lib.mixins.listctrl  as  listmix
+
+import images
+from event import EVT_COUNT, CountingThread
+from mixin import constructor
+from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
+
 BaseDir = os.path.dirname(__file__)
+
 
 def path_join(*path):
     return os.path.join(BaseDir, *path)
+
 
 def get_const():
     constfilepath = path_join("const.json")
@@ -28,9 +33,11 @@ def get_const():
         from . import const
     return const.json
 
+
 def get_current_time():
     dt = datetime.now()
     return dt.strftime("%Y-%m-%d %X")
+
 
 def create_menu(frame, data):
     for title, args in data.items():
@@ -48,6 +55,7 @@ def create_menu(frame, data):
                 mi.Enable({1: 1, 0: 0, None: 1}[mi.get_arg("enable")])
         yield (m, title)
 
+
 def create_menubar(frame, data):
     mb = wx.MenuBar()
     # create menu
@@ -55,18 +63,25 @@ def create_menubar(frame, data):
         mb.Append(m, title)
     return mb
 
+
 class ModalContext(object):
     def __init__(self):
         self.show = False
+
     def __enter__(self, *args, **kw):
         self.show = True
+
     def __exit__(self, *args, **kw):
         self.show = False
+
+
 modal_context = ModalContext()
+
 
 @constructor
 class MenuItem(wx.MenuItem):
     pass
+
 
 @constructor
 class ReceiveListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
@@ -103,7 +118,6 @@ class ReceiveListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         # self.addCache(data_list)
         return popUpWin
 
-
     initRows = AddRows
 
     def AdaptWidth(self, headings_num, proportions):
@@ -112,9 +126,10 @@ class ReceiveListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
         for i in range(headings_num):
             w = _w * proportions[i]
             self.SetColumnWidth(i, w)
+
+
 @constructor
 class Frame(wx.Frame, listmix.ColumnSorterMixin):
-
     @property
     def const(self):
         return get_const()
@@ -130,7 +145,7 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         self.statusbar = self.CreateStatusBar()
         # ----- layout -----
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.LC, 1, wx.EXPAND|wx.ALL)
+        sizer.Add(self.LC, 1, wx.EXPAND | wx.ALL)
         listmix.ColumnSorterMixin.__init__(self, self.columnNum)
         self.SetSizer(sizer)
         # self.Layout()
@@ -186,14 +201,14 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
             rl = data["Jdjl"]
             signal = self.LC.AddRows(rl)
             if signal and getattr(event, 'auto', False):
-            # ----- 弹窗提醒用户有待分解的记录
+                # ----- 弹窗提醒用户有待分解的记录
                 if self.IsIconized():
                     self.Restore()
                 m = self.FindItemInMenuBar(menuId=777)
                 if not m.IsChecked():
                     m.Check()
                     self.SetWindowStyle(self.GetWindowStyle() | wx.STAY_ON_TOP)
-                # self.SetWindowStyle(self.GetWindowStyle() ^ wx.STAY_ON_TOP)
+                    # self.SetWindowStyle(self.GetWindowStyle() ^ wx.STAY_ON_TOP)
             datamap = {}
             for idx, val in enumerate(rl):
                 datamap[idx + 1] = tuple(val)
@@ -306,7 +321,6 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         if s % 15 == 0:
             e.auto = True
             self.OnSyncData(e)
-
 
     def OnToggleAutoSync(self, e):
         if e.IsChecked():
