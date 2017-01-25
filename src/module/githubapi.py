@@ -2,7 +2,7 @@
 # @Author: wangwh8
 # @Date:   2017-01-19 10:26:46
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-25 17:00:23
+# @Last Modified time: 2017-01-25 17:15:45
 import requests
 import tempfile
 import zipfile
@@ -65,9 +65,9 @@ def replaceSourceWith(zip_file, root_dir):
     members = []
     src_dir = None
     for f in f_zip.namelist():
-        if 'src' in f:
+        if 'module' in f:
             members.append(f)
-        if f.endswith('/src/'):
+        if f.endswith('/module/'):
             src_dir = f
     bak_dir = os.path.join(root_dir, 'bak')
     to_copy_src_dir = os.path.join(bak_dir, src_dir)
