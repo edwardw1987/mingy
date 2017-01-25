@@ -2,12 +2,14 @@
 # @Author: wangwh8
 # @Date:   2017-01-19 10:26:46
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-25 15:21:58
+# @Last Modified time: 2017-01-25 17:00:23
 import requests
 import tempfile
 import zipfile
 import os
 from requests.exceptions import ConnectTimeout
+import shutil
+
 
 GITHUB_API_HOST = 'api.github.com'
 GITHUB_OWNER = 'edwardw1987'
@@ -49,18 +51,33 @@ def updateByZipball(zipball_url):
         print 'Remains:', "%.2f" % ((contentLen -remains)*100/float(contentLen)), '%'
         tf.write(_b)
         remains -= 1024
+    replaceSourceWith(tf, '.')
     print 'Finished 100 %'
-    extract(tf, '.')
 
-def extract(zip_file, output_dir):
-  f_zip = zipfile.ZipFile(zip_file, 'r')
- 
-  # 解压所有文件到指定目录
-  f_zip.extractall(output_dir)
- 
-  # 逐个解压文件到指定目录
-  for f in f_zip.namelist():
-    f_zip.extract(f, os.path.join(output_dir, 'bak'))
+def replaceSourceWith(zip_file, root_dir):
+    f_zip = zipfile.ZipFile(zip_file, 'r')
+    # 解压所有文件到指定目录
+    # f_zip.extractall()
+    # shutil.copytree()
+    # print members
+    # shutil.copytree(os.path.join(root_dir,))
+    # 逐个解压文件到指定目录
+    members = []
+    src_dir = None
+    for f in f_zip.namelist():
+        if 'src' in f:
+            members.append(f)
+        if f.endswith('/src/'):
+            src_dir = f
+    bak_dir = os.path.join(root_dir, 'bak')
+    to_copy_src_dir = os.path.join(bak_dir, src_dir)
+    f_zip.extractall(path= bak_dir, members=members)
+    dest_dir = root_dir
+    print dest_dir
+    for i in os.listdir(to_copy_src_dir):
+        shutil.copy(i, root_dir + '\\' + i.rsplit('\\')[-1])
+    # shutil.copytree(to_copy_src_dir, dest_dir)
+    #   f_zip.extract(f, os.path.join(output_dir, 'bak'))
 if __name__ == '__main__':
     lr =  getLatestRelease()
     # print lr["tag_name"]

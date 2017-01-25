@@ -2,8 +2,9 @@
 import threading
 
 import wx
-import ui
+
 from launcher import launcher
+from module import ui
 
 
 restart_app = False
@@ -14,7 +15,7 @@ class MingYuanApp(wx.App):
     def OnInit(self):
         self.fr = ui.Frame(
             None,
-            icon=ui.path_join('launcher/rat_head.ico'),
+            icon=ui.path_join('../launcher/rat_head.ico'),
             size=(1200, 600),
             minsize=(400, 300),
         )

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: edward
 # @Date:   2016-07-24 02:22:41
-# @Last Modified by:   edward
-# @Last Modified time: 2016-07-24 16:49:15
+# @Last Modified by:   wangwh8
+# @Last Modified time: 2017-01-25 16:42:18
 
 import threading
 import time
@@ -37,8 +37,9 @@ class StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check
     regularly for the stopped() condition."""
 
-    def __init__(self):
-        super(StoppableThread, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self.setDaemon(True)
         self._stop = threading.Event()
 
     def stop(self):

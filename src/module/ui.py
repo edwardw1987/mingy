@@ -3,7 +3,6 @@
 import json
 import os
 import tempfile
-import threading
 from collections import OrderedDict
 from datetime import datetime
 
@@ -13,13 +12,12 @@ import wx.lib.mixins.listctrl as listmix
 
 import githubapi
 import images
-from event import EVT_COUNT, CountingThread
+from event import EVT_COUNT, CountingThread, StoppableThread
 from mixin import constructor
 from rest.client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
-
 # --------------------
 
-VERSION = '0.3'
+VERSION = '0.2'
 # --------------------
 BaseDir = os.path.dirname(__file__)
 
@@ -354,7 +352,6 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
                 self.syncThd.stop()
 
     def popUpUpdatePD(self, url):
-        print url
         resp = requests.get(url, stream=True)
         clen = int(resp.headers["Content-Length"])
         size = 1024
@@ -384,11 +381,11 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
                 (keepGoing, skip) = dlg.Update(count,
                                                '%s/%sk' % (count, max))
             # if not (keepGoing and count < max):
-        githubapi.extract(tf, '.')
+        githubapi.replaceSourceWith(tf, path_join('.'))
         dlg.Destroy()
 
     def asyncUpdate(self):
-        thd = threading.Thread(target=self._doUpdate)
+        thd = StoppableThread(target=self._doUpdate)
         self.push_thread(thd)
         thd.start()
 
