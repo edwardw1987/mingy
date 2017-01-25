@@ -7,9 +7,6 @@ from launcher import launcher
 from module import ui
 
 
-restart_app = False
-
-
 class MingYuanApp(wx.App):
 
     def OnInit(self):
@@ -28,8 +25,9 @@ def main():
     app = MingYuanApp()
     app.fr.asyncUpdate()
     app.MainLoop()
-    if restart_app:
-        launcher.main()
+    if ui.restart_ctx.is_set():
+        with restart_ctx:
+            launcher.main()
 
 
 if __name__ == "__main__":
