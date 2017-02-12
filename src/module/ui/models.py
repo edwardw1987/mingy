@@ -14,6 +14,7 @@ class MenuAction(MenuFactory, wx.Menu):
 class MenuSetting(MenuFactory, wx.Menu):
     auto_sync = Widget(wx.MenuItem, kind=1, text=u"自动同步", id=-1)
 
+
 class MenuView(MenuFactory, wx.Menu):
     auto_sync = Widget(id=-1, wx_factory=wx.MenuItem, text=u"自动同步", kind=1)
 
