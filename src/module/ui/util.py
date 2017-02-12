@@ -14,7 +14,7 @@ class Widget(object):
     def __init__(self, wx_factory, pos=-1, **kwargs):
         super(Widget, self).__init__()
         self._pos = pos
-        self._intance = None
+        self._instance = None
         self._factory = wx_factory
         self._init_args = {}
         self._attr = {}
