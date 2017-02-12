@@ -1,8 +1,8 @@
 # coding:utf-8
 import wx
-from util import quick_menu_bar
 import sys
-from models import MenuB
+from models import MenuBar, MenuView
+
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
@@ -28,9 +28,9 @@ class Frame(wx.Frame):
 
     def _create_menubar(self):
 
-        MenuB.stay_on_top.set_handler(self.OnSwitchTop)
-        mb = quick_menu_bar(data)
-        self.SetMenuBar(mb)
+        MenuView.stay_on_top.set_handler(wx.EVT_MENU, self.OnSwitchTop)
+
+        self.SetMenuBar(MenuBar.create())
 
     def push_thread(self, thread):
         self._threads.append(thread)

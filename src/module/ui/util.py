@@ -14,14 +14,15 @@ class Widget(object):
     def __init__(self, wx_factory, pos=-1, **kwargs):
         super(Widget, self).__init__()
         self._pos = pos
+        self._intance = None
         self._handler = None
         self._factory = wx_factory
         self._init_args = {}
         self._attr = {}
         self.handle_args(kwargs)
 
-    def set_handler(self, handler):
-        self._handler = handler
+    def set_handler(self, event, handler):
+        self._handler = (event, handler)
 
     def get_handler(self):
         return self._handler
@@ -79,4 +80,8 @@ class MenuFactory(Factory):
     def create(cls, widget):
         menu = widget.get_instance()
         for w in cls.iter_widegts():
-            menu.AppendItem(w.create())
+            mi = w.create()
+            print w.get_handler()
+            menu.AppendItem(mi)
+            e, h = w.get_handler()
+            menu.Bind(e, h, mi)

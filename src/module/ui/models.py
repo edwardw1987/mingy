@@ -16,7 +16,7 @@ class MenuSetting(MenuFactory, wx.Menu):
 
 
 class MenuView(MenuFactory, wx.Menu):
-    auto_sync = Widget(id=-1, wx_factory=wx.MenuItem, text=u"自动同步", kind=1)
+    stay_on_top = Widget(id=-1, wx_factory=wx.MenuItem, text=u"窗口置顶", kind=1)
 
 
 class MenuBar(Factory, wx.MenuBar):
