@@ -2,7 +2,6 @@
 
 import wx
 
-from launcher import launcher
 from module.ui.frame import Frame
 
 

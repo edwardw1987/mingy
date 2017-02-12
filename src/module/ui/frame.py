@@ -2,10 +2,12 @@
 import wx
 import sys
 from models import MenuBar, MenuView, MenuAction
-
+from os import path
+from listbook import TestLB
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
+basedir = path.dirname(__file__)
 
 class Frame(wx.Frame):
     def __init__(self):
@@ -13,10 +15,10 @@ class Frame(wx.Frame):
         self._threads = []
         self.init_menubar()
         self.status_bar = self.CreateStatusBar()
-
+        TestLB(self, -1, None)
         # ==========common apply==========
         self.SetTitle(u"明源自动化客户端v%s")
-        icon = 'launcher\\rat_head.ico'
+        icon = path.join(basedir, '..\\..\\launcher\\rat_head.ico')
         size = (1200, 600)
         minsize = (400, 300)
         self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_ANY))
