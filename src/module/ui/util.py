@@ -15,22 +15,19 @@ class Widget(object):
         super(Widget, self).__init__()
         self._pos = pos
         self._intance = None
-        self._handler = None
         self._factory = wx_factory
         self._init_args = {}
         self._attr = {}
         self.handle_args(kwargs)
 
-    def set_handler(self, event, handler):
-        self._handler = (event, handler)
-
-    def get_handler(self):
-        return self._handler
-
     def get(self, attr_name):
         return self._attr.get(attr_name)
 
     def get_instance(self):
+        return self._instance
+
+    @property
+    def instance(self):
         return self._instance
 
     def get_factory(self):
@@ -51,8 +48,6 @@ class Widget(object):
 
 # ------------------------------------
 class Factory(object):
-    _pos = 0
-
     @classmethod
     def create(cls, *arg, **kwargs):
         raise NotImplementedError()
@@ -75,13 +70,19 @@ class Factory(object):
             factory.create(widget, *args, **kwargs)
 
 
+class MenuBarFactory(Factory):
+    @classmethod
+    def create(cls):
+        menu_bar = cls()
+        for menu_widget in cls.iter_widegts():
+            menu = menu_widget.create()
+            cls.handle_widget(menu_widget)
+            menu_bar.Append(menu, menu_widget.get('text'))
+        return menu_bar
+
+
 class MenuFactory(Factory):
     @classmethod
-    def create(cls, widget):
-        menu = widget.get_instance()
-        for w in cls.iter_widegts():
-            mi = w.create()
-            print w.get_handler()
-            menu.AppendItem(mi)
-            e, h = w.get_handler()
-            menu.Bind(e, h, mi)
+    def create(cls, menu_widget):
+        for mi_widget in cls.iter_widegts():
+            menu_widget.instance.AppendItem(mi_widget.create())

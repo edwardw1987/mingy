@@ -1,6 +1,6 @@
 # coding:utf-8
 import wx
-from util import Factory, Widget, MenuFactory
+from util import Widget, MenuBarFactory, MenuFactory
 
 
 class MenuAction(MenuFactory, wx.Menu):
@@ -19,19 +19,10 @@ class MenuView(MenuFactory, wx.Menu):
     stay_on_top = Widget(id=-1, wx_factory=wx.MenuItem, text=u"窗口置顶", kind=1)
 
 
-class MenuBar(Factory, wx.MenuBar):
+class MenuBar(MenuBarFactory, wx.MenuBar):
     action = Widget(MenuAction, pos=1, text=u'操作(&O)')
     view = Widget(MenuView, pos=2, text=u"查看(&V)")
     settings = Widget(MenuSetting, pos=3, text=u"设置(&S)")
-
-    @classmethod
-    def create(cls):
-        menu_bar = cls()
-        for widget in cls.iter_widegts():
-            menu = widget.create()
-            cls.handle_widget(widget)
-            menu_bar.Append(menu, widget.get('text'))
-        return menu_bar
 
 
 def main():

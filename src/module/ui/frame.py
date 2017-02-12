@@ -1,7 +1,7 @@
 # coding:utf-8
 import wx
 import sys
-from models import MenuBar, MenuView
+from models import MenuBar, MenuView, MenuAction
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -11,7 +11,7 @@ class Frame(wx.Frame):
     def __init__(self):
         super(Frame, self).__init__(None)
         self._threads = []
-        self._create_menubar()
+        self.init_menubar()
         self.status_bar = self.CreateStatusBar()
 
         # ==========common apply==========
@@ -26,11 +26,15 @@ class Frame(wx.Frame):
         # ==========event==========
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
-    def _create_menubar(self):
-
-        MenuView.stay_on_top.set_handler(wx.EVT_MENU, self.OnSwitchTop)
-
-        self.SetMenuBar(MenuBar.create())
+    def init_menubar(self):
+        mb = MenuBar.create()
+        MenuBar.view.instance.Bind(
+            wx.EVT_MENU, self.OnSwitchTop, MenuView.stay_on_top.instance
+        )
+        MenuBar.action.instance.Bind(
+            wx.EVT_MENU, self.OnClose, MenuAction.close.instance
+        )
+        self.SetMenuBar(mb)
 
     def push_thread(self, thread):
         self._threads.append(thread)
