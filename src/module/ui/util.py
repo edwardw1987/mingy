@@ -3,7 +3,6 @@
 All util functions for quick building of UI components
 '''
 import re
-import time
 
 
 def get_func_doc_args(fn):
