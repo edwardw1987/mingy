@@ -9,6 +9,7 @@ import listctrls
 from models import MenuBar, MenuAction, MenuView
 from context import modal_ctx
 from event import CountingThread, EVT_COUNT
+from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 
 headings = [
     u"接待时间",
@@ -27,39 +28,6 @@ class ColoredPanel(wx.Window):
         self.SetBackgroundColour(color)
         if wx.Platform == '__WXGTK__':
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
-
-
-class Panel01(wx.Panel, ColumnSorterMixin):
-    def __init__(self, parent):
-        super(wx.Panel, self).__init__(parent)
-        self.parent = parent
-        self._init_listctrl()
-
-    def _init_listctrl(self):
-        self.listctrl = listctrls.ReceiveList(self)
-
-        # ----- layout -----
-        # sizer = wx.BoxSizer(wx.VERTICAL)
-        # sizer.Add(self.listctrl, 1, wx.EXPAND | wx.ALL)
-        # self.SetSizer(sizer)
-        # self.Layout()
-        # self.listctrl.SetAutoLayout(True)
-        # ----------
-        self.il = wx.ImageList(16, 16)
-
-        # self.idx1 = self.il.Add(images.Smiles.GetBitmap())
-        self.sm_up = self.il.Add(images.SmallUpArrow.GetBitmap())
-        self.sm_dn = self.il.Add(images.SmallDnArrow.GetBitmap())
-        self.listctrl.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
-
-    def GetListCtrl(self):
-        return self.listctrl
-
-    def GetSortImages(self):
-        return (self.sm_dn, self.sm_up)
-
-
-from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 
 
 class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
@@ -134,13 +102,14 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         MenuBar.action.instance.Bind(
             wx.EVT_MENU, self.OnToggleAutoSync, MenuAction.auto_sync.instance)
         # for count event
-        self.frame.Bind(EVT_COUNT, self.OnCount)
+        self.list.Bind(EVT_COUNT, self.OnCount)
 
     def OnCount(self, e):
         _, s = e.GetValue()
         if s % 15 == 0:
             e.auto = True
-            self.frame.start_thread(self.OnSyncData, e)
+            # self.frame.start_thread(self.OnSyncData, e)
+            self.OnSyncData(e)
 
     def SetStatusText(self, text):
         status_bar = wx.FindWindowById(9999).GetStatusBar()
@@ -185,7 +154,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
 
     def OnToggleAutoSync(self, e):
         if e.IsChecked():
-            thd = CountingThread(self.frame, (1, 1))
+            thd = CountingThread(self.list, (1, 1))
             self._auto_sync_thread = thd
             self.frame.push_thread(thd)
             thd.start()

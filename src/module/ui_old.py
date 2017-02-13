@@ -308,30 +308,3 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
             return 0
         dlg.Destroy()
         return 1
-
-    def getTitle(self):
-        return self.const["weixin_demo_title"] % VERSION
-
-
-class Panel01(wx.Panel):
-    def __init__(self, parent):
-        super(wx.Panel, self).__init__(parent)
-        self.parent = parent
-        self._initListCtrl()
-
-    def _initListCtrl(self):
-        const_headings = self.parent.const["headings"]
-        self.LC = ReceiveListCtrl(self,
-                                  style=wx.LC_REPORT,
-                                  headings=const_headings,
-                                  # columnFormat=wx.LIST_FORMAT_CENTER,
-                                  fgcolor='#f40',
-                                  )
-        # self.LC.SetAutoLayout(True)
-
-        self.il = wx.ImageList(16, 16)
-
-        # self.idx1 = self.il.Add(images.Smiles.GetBitmap())
-        self.sm_up = self.il.Add(images.SmallUpArrow.GetBitmap())
-        self.sm_dn = self.il.Add(images.SmallDnArrow.GetBitmap())
-        self.LC.SetImageList(self.il, wx.IMAGE_LIST_SMALL)

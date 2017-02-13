@@ -3,8 +3,7 @@ import wx
 import images
 import panels
 
-sidebar_list = [u"微信提醒", u"派单",
-                ]
+sidebar_list = [u"微信提醒", u"派单"]
 
 
 class TestLB(wx.Listbook):
@@ -77,4 +76,3 @@ class TestLB(wx.Listbook):
         sel = self.GetSelection()
         # self.log.write('OnPageChanging, old:%d, new:%d, sel:%d\n' % (old, new, sel))
         event.Skip()
-
