@@ -138,10 +138,9 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
 
     def OnCount(self, e):
         _, s = e.GetValue()
-        print s
         if s % 15 == 0:
             e.auto = True
-            wx.CallAfter(self.OnSyncData, e)
+            self.frame.start_thread(self.OnSyncData, e)
 
     def SetStatusText(self, text):
         status_bar = wx.FindWindowById(9999).GetStatusBar()
@@ -170,7 +169,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 datamap[idx + 1] = tuple(val)
             self.itemDataMap = datamap
             self.list.ClearAll()
-            self.PopulateList()
+            wx.CallAfter(self.PopulateList)
             self.SetStatusText(u'数据同步成功')
             self._handle_popup(event)
         else:

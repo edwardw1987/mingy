@@ -4,6 +4,7 @@ import sys
 from models import MenuBar, MenuView, MenuAction
 from os import path
 from listbook import TestLB
+from event import StoppableThread
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -39,6 +40,11 @@ class Frame(wx.Frame):
             wx.EVT_MENU, self.OnClose, MenuAction.close.instance
         )
         self.SetMenuBar(mb)
+
+    def start_thread(self, fn, *args, **kwargs):
+        thd = StoppableThread(target=fn, args=args, kwargs=kwargs)
+        self.push_thread(thd)
+        thd.start()
 
     def push_thread(self, thread):
         self._threads[thread.getName()] = thread
