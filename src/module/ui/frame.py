@@ -11,7 +11,7 @@ basedir = path.dirname(__file__)
 
 class Frame(wx.Frame):
     def __init__(self):
-        super(Frame, self).__init__(None)
+        super(Frame, self).__init__(None, id=9999)
         self._threads = []
         self.init_menubar()
         self.status_bar = self.CreateStatusBar()

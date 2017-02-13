@@ -16,6 +16,7 @@ headings = [
     u"分解状态",
 ]
 
+
 class ColoredPanel(wx.Window):
     def __init__(self, parent, color):
         wx.Window.__init__(self, parent, -1, style=wx.SIMPLE_BORDER)
@@ -61,7 +62,6 @@ from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
     def __init__(self, parent, log):
         wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS)
-
         self.log = log
         tID = wx.NewId()
 
@@ -129,7 +129,12 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         # for sync data
         MenuBar.action.instance.Bind(wx.EVT_MENU, self.OnSyncData, MenuAction.sync_data.instance)
 
+    def SetStatusText(self, text):
+        status_bar = wx.FindWindowById(9999).GetStatusBar()
+        status_bar.SetStatusText(text)
+
     def OnSyncData(self, event):
+        self.SetStatusText(u"正在同步数据......")
         my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
         data = my.getJdjl(page_size=30)
         # print data
@@ -164,12 +169,13 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                     dlg.ShowModal()
                     dlg.Destroy()
 
+        self.SetStatusText('')
+
     def OnUseNative(self, event):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", not event.IsChecked())
         wx.GetApp().GetTopWindow().LoadDemo("ListCtrl")
 
     def PopulateList(self, heading_only=False):
-
         if heading_only:
 
             if 0:
