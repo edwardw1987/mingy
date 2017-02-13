@@ -155,12 +155,13 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
             wx.CallAfter(self.PopulateList)
         else:
             self.SetStatusText('')
-            if modal_ctx.show is False:
-                with modal_ctx:
-                    dlg = wx.MessageDialog(self,
-                                           u"请确认网络正常并且VPN已开启",
-                                           u"连接错误",
-                                           wx.OK | wx.ICON_ERROR)
+            dlg = wx.MessageDialog(self,
+                                   u"请确认网络正常并且VPN已开启",
+                                   u"连接错误",
+                                   wx.OK | wx.ICON_ERROR)
+            modal_ctx.set_modal(dlg)
+            with modal_ctx as dlg:
+                if dlg:
                     dlg.ShowModal()
                     dlg.Destroy()
 

@@ -8,14 +8,23 @@ class ModalContext(object):
     `with` the `modal_ctx` instance that will change `show` to be `True`,
     and hold it's value, till exit `modal_ctx` (user closed the modal dialog).
     """
+
     def __init__(self):
-        self.show = False
+        self._show = False
+        self._modal = None
 
     def __enter__(self, *args, **kw):
-        self.show = True
+        self._show = True
+        return self._modal
 
     def __exit__(self, *args, **kw):
-        self.show = False
+        self._show = False
+        self._modal = None
+
+    def set_modal(self, modal):
+        if self._show:
+            return
+        self._modal = modal
 
 
 class RestartContext(object):
