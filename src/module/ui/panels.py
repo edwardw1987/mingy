@@ -155,6 +155,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
             for idx, val in enumerate(rows):
                 datamap[idx + 1] = tuple(val)
             self.itemDataMap = datamap
+            self.list.ClearAll()
             wx.CallAfter(self.PopulateList)
             self.SetStatusText(u'数据同步成功')
             self._handle_popup(event)
@@ -174,41 +175,41 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         wx.GetApp().GetTopWindow().LoadDemo("ListCtrl")
 
     def PopulateList(self, heading_only=False):
+
+        if 0:
+            # for normal, simple columns, you can add them like this:
+            self.list.InsertColumn(0, "Artist")
+            self.list.InsertColumn(1, "Title", wx.LIST_FORMAT_RIGHT)
+            self.list.InsertColumn(2, "Genre")
+        else:
+            # but since we want images on the column header we have to do it the hard way:
+            info = wx.ListItem()
+            info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+            info.m_image = -1
+            info.m_format = 0
+            info.m_text = headings[0]
+            self.list.InsertColumnInfo(0, info)
+
+            info.m_format = wx.LIST_FORMAT_RIGHT
+            info.m_text = headings[1]
+            self.list.InsertColumnInfo(1, info)
+
+            info.m_format = 0
+            info.m_text = headings[2]
+            self.list.InsertColumnInfo(2, info)
+            info.m_format = 0
+            info.m_text = headings[3]
+            self.list.InsertColumnInfo(3, info)
+            info.m_format = 0
+            info.m_text = headings[4]
+            self.list.InsertColumnInfo(4, info)
+            info.m_format = 0
+            info.m_text = headings[5]
+            self.list.InsertColumnInfo(5, info)
+            info.m_format = 0
+            info.m_text = headings[6]
+            self.list.InsertColumnInfo(6, info)
         if heading_only:
-
-            if 0:
-                # for normal, simple columns, you can add them like this:
-                self.list.InsertColumn(0, "Artist")
-                self.list.InsertColumn(1, "Title", wx.LIST_FORMAT_RIGHT)
-                self.list.InsertColumn(2, "Genre")
-            else:
-                # but since we want images on the column header we have to do it the hard way:
-                info = wx.ListItem()
-                info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-                info.m_image = -1
-                info.m_format = 0
-                info.m_text = headings[0]
-                self.list.InsertColumnInfo(0, info)
-
-                info.m_format = wx.LIST_FORMAT_RIGHT
-                info.m_text = headings[1]
-                self.list.InsertColumnInfo(1, info)
-
-                info.m_format = 0
-                info.m_text = headings[2]
-                self.list.InsertColumnInfo(2, info)
-                info.m_format = 0
-                info.m_text = headings[3]
-                self.list.InsertColumnInfo(3, info)
-                info.m_format = 0
-                info.m_text = headings[4]
-                self.list.InsertColumnInfo(4, info)
-                info.m_format = 0
-                info.m_text = headings[5]
-                self.list.InsertColumnInfo(5, info)
-                info.m_format = 0
-                info.m_text = headings[6]
-                self.list.InsertColumnInfo(6, info)
             return
         items = self.itemDataMap.items()
         for key, data in items:
@@ -244,7 +245,6 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         # self.list.SetItem(item)
 
         self.currentItem = 0
-        return popUp
 
     # Used by the ColumnSorterMixin, see wx/lib/mixins/listctrl.py
     def GetListCtrl(self):
