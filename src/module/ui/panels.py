@@ -1,9 +1,11 @@
 # coding:utf-8
 import sys
+
 import wx
-import listctrls
-import images
 from wx.lib.mixins.listctrl import ColumnSorterMixin
+
+import images
+import listctrls
 from models import MenuBar, MenuAction
 
 headings = [
@@ -55,7 +57,6 @@ class Panel01(wx.Panel, ColumnSorterMixin):
         return (self.sm_dn, self.sm_up)
 
 
-from listctrls import musicdata
 from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 
 
@@ -213,6 +214,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 self.list.InsertColumnInfo(6, info)
             return
         items = self.itemDataMap.items()
+        popUp = False
         for key, data in items:
             index = self.list.InsertImageStringItem(sys.maxint, data[0], self.idx1)
             item = self.list.GetItem(index)
@@ -223,8 +225,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 elif data[-1] == u'待分解':
                     item.SetTextColour(wx.NamedColour("RED"))
                     item.SetFont(item.GetFont().Bold())
-                    # popUpWin = row[2] in get_const()["resource"].values()
-                    popUpWin = True
+                    popUp = True
                 elif data[-1] == u'分解完毕':
                     item.SetTextColour(wx.NamedColour("BLUE"))
                     item.SetFont(item.GetFont().Bold())
@@ -247,6 +248,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         # self.list.SetItem(item)
 
         self.currentItem = 0
+        return popUp
 
     # Used by the ColumnSorterMixin, see wx/lib/mixins/listctrl.py
     def GetListCtrl(self):
