@@ -55,8 +55,6 @@ class TestLB(wx.Listbook):
         p.win = win
 
         def OnCPSize(evt, win=win):
-            import time
-            print 'sizing...%s' % time.asctime()
             win.SetPosition((0, 0))
             win.SetSize(evt.GetSize())
             wins = wx.FindWindowById(evt.GetId())
