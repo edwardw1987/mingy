@@ -17,7 +17,7 @@ class Frame(wx.Frame):
         self.status_bar = self.CreateStatusBar()
         TestLB(self, -1, None)
         # ==========common apply==========
-        self.SetTitle(u"明源自动化客户端v%s")
+        self.SetTitle(u"明源自动化客户端")
         icon = path.join(basedir, '..\\..\\launcher\\rat_head.ico')
         size = (1200, 600)
         minsize = (400, 300)

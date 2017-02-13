@@ -37,12 +37,12 @@ class TestLB(wx.Listbook):
             self.AddPage(win, colour, imageId=imID)
             imID += 1
             if imID == il.GetImageCount(): imID = 0
-            if first:
-                st = wx.StaticText(win.win, -1,
-                                   "You can put nearly any type of window here,\n"
-                                   "and the list can be on any side of the Listbook",
-                                   wx.Point(10, 10))
-                first = False
+            # if first:
+            #     st = wx.StaticText(win.win, -1,
+            #                        "You can put nearly any type of window here,\n"
+            #                        "and the list can be on any side of the Listbook",
+            #                        wx.Point(10, 10))
+            #     first = False
 
         self.Bind(wx.EVT_LISTBOOK_PAGE_CHANGED, self.OnPageChanged)
         self.Bind(wx.EVT_LISTBOOK_PAGE_CHANGING, self.OnPageChanging)

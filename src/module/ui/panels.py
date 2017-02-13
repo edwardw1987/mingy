@@ -4,6 +4,7 @@ import wx
 import listctrls
 import images
 from wx.lib.mixins.listctrl import ColumnSorterMixin
+from models import MenuBar, MenuAction
 
 
 class ColoredPanel(wx.Window):
@@ -45,6 +46,7 @@ class Panel01(wx.Panel, ColumnSorterMixin):
 
 
 from listctrls import musicdata
+from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 
 
 class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
@@ -85,11 +87,11 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         self.list.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
         sizer.Add(self.list, 1, wx.EXPAND)
 
-        self.PopulateList()
+        self.PopulateList(heading_only=True)
 
         # Now that the list exists we can init the other base class,
         # see wx/lib/mixins/listctrl.py
-        self.itemDataMap = musicdata
+        # self.itemDataMap = musicdata
         ColumnSorterMixin.__init__(self, 3)
         # self.SortListItems(0, True)
 
@@ -115,60 +117,127 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
 
         # for wxGTK
         self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
+        # for sync data
+        MenuBar.action.instance.Bind(wx.EVT_MENU, self.OnSyncData, MenuAction.sync_data.instance)
 
-    def OnSize(self, event):
-        pass
-        # print event.GetSize()
-        # self.list.Layout()
-        # self.list.SetSize(event.GetSize())
+    def OnSyncData(self, event):
+        my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
+        data = my.getJdjl(page_size=30)
+        # print data
+        if "Jdjl" in data:
+            rl = data["Jdjl"]
+            # if signal and getattr(event, 'auto', False):
+            #     # ----- 弹窗提醒用户有待分解的记录
+            #     if self.IsIconized():
+            #         self.Restore()
+            #     m = self.FindItemInMenuBar(menuId=777)
+            #     if not m.IsChecked():
+            #         m.Check()
+            #         self.SetWindowStyle(self.GetWindowStyle() | wx.STAY_ON_TOP)
+            #         # self.SetWindowStyle(self.GetWindowStyle() ^ wx.STAY_ON_TOP)
+            datamap = {}
+            for idx, val in enumerate(rl):
+                datamap[idx + 1] = tuple(val)
+            self.itemDataMap = datamap
+            self.PopulateList()
+            # self.list.Hide()
+            # self.list.AdaptWidth(self.columnNum, [1.5, 3, 1, 2, 0.5, 1, 1])
+            # self.list.Show()
+            # self.statusbar.SetStatusText(self.const["sync_end_msg"] + ' at ' + get_current_time())
+        else:
+            self.statusbar.SetStatusText('')
+            if modal_context.show is False:
+                with modal_context:
+                    dlg = wx.MessageDialog(self,
+                                           self.const["sync_error_msg"],
+                                           self.const["sync_error_title"],
+                                           wx.OK | wx.ICON_ERROR)
+                    dlg.ShowModal()
+                    dlg.Destroy()
+
     def OnUseNative(self, event):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", not event.IsChecked())
         wx.GetApp().GetTopWindow().LoadDemo("ListCtrl")
 
-    def PopulateList(self):
-        if 0:
-            # for normal, simple columns, you can add them like this:
-            self.list.InsertColumn(0, "Artist")
-            self.list.InsertColumn(1, "Title", wx.LIST_FORMAT_RIGHT)
-            self.list.InsertColumn(2, "Genre")
-        else:
-            # but since we want images on the column header we have to do it the hard way:
-            info = wx.ListItem()
-            info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-            info.m_image = -1
-            info.m_format = 0
-            info.m_text = "Artist"
-            self.list.InsertColumnInfo(0, info)
+    def PopulateList(self, heading_only=False):
+        texts = [
+            u"接待时间",
+            u"主题",
+            u"请求来源",
+            u"房间",
+            u"服务请求人",
+            u"接待人",
+            u"分解状态",
+        ]
+        if heading_only:
 
-            info.m_format = wx.LIST_FORMAT_RIGHT
-            info.m_text = "Title"
-            self.list.InsertColumnInfo(1, info)
+            if 0:
+                # for normal, simple columns, you can add them like this:
+                self.list.InsertColumn(0, "Artist")
+                self.list.InsertColumn(1, "Title", wx.LIST_FORMAT_RIGHT)
+                self.list.InsertColumn(2, "Genre")
+            else:
+                # but since we want images on the column header we have to do it the hard way:
+                info = wx.ListItem()
+                info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+                info.m_image = -1
+                info.m_format = 0
+                info.m_text = texts[0]
+                self.list.InsertColumnInfo(0, info)
 
-            info.m_format = 0
-            info.m_text = "Genre"
-            self.list.InsertColumnInfo(2, info)
+                info.m_format = wx.LIST_FORMAT_RIGHT
+                info.m_text = texts[1]
+                self.list.InsertColumnInfo(1, info)
 
-        items = musicdata.items()
+                info.m_format = 0
+                info.m_text = texts[2]
+                self.list.InsertColumnInfo(2, info)
+                info.m_format = 0
+                info.m_text = texts[3]
+                self.list.InsertColumnInfo(3, info)
+                info.m_format = 0
+                info.m_text = texts[4]
+                self.list.InsertColumnInfo(4, info)
+                info.m_format = 0
+                info.m_text = texts[5]
+                self.list.InsertColumnInfo(5, info)
+                info.m_format = 0
+                info.m_text = texts[6]
+                self.list.InsertColumnInfo(6, info)
+            return
+        items = self.itemDataMap.items()
         for key, data in items:
             index = self.list.InsertImageStringItem(sys.maxint, data[0], self.idx1)
-            self.list.SetStringItem(index, 1, data[1])
-            self.list.SetStringItem(index, 2, data[2])
+            item = self.list.GetItem(index)
+            for pos, val in enumerate(data[1:]):
+                self.list.SetStringItem(index, pos + 1, val)
+                if data[-1] == u"已关闭":
+                    item.SetTextColour(wx.NamedColour("GRAY"))
+                elif data[-1] == u'待分解':
+                    item.SetTextColour(wx.NamedColour("RED"))
+                    item.SetFont(item.GetFont().Bold())
+                    # popUpWin = row[2] in get_const()["resource"].values()
+                    popUpWin = True
+                elif data[-1] == u'分解完毕':
+                    item.SetTextColour(wx.NamedColour("BLUE"))
+                    item.SetFont(item.GetFont().Bold())
+                self.list.SetItem(item)
             self.list.SetItemData(index, key)
 
         self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         self.list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
-        self.list.SetColumnWidth(2, 100)
+        self.list.SetColumnWidth(2, wx.LIST_AUTOSIZE)
 
         # show how to select an item
         self.list.SetItemState(5, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
 
         # show how to change the colour of a couple items
-        item = self.list.GetItem(1)
-        item.SetTextColour(wx.BLUE)
-        self.list.SetItem(item)
-        item = self.list.GetItem(4)
-        item.SetTextColour(wx.RED)
-        self.list.SetItem(item)
+        # item = self.list.GetItem(1)
+        # item.SetTextColour(wx.BLUE)
+        # self.list.SetItem(item)
+        # item = self.list.GetItem(4)
+        # item.SetTextColour(wx.RED)
+        # self.list.SetItem(item)
 
         self.currentItem = 0
 
