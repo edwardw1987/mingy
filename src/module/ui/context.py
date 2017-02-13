@@ -2,11 +2,13 @@
 
 class ModalContext(object):
     """
-    `Modal Dialog Context`
-    Attribute `show` defaults to `False`
-    if some modal dialog has been popup and shown,
-    `with` the `modal_ctx` instance that will change `show` to be `True`,
-    and hold it's value, till exit `modal_ctx` (user closed the modal dialog).
+    with the `modal_ctx` instance,
+    we can block dialogs if one is shown.
+    > dlg = wx.MessageDialog(...)
+    > if modal_ctx.set_modal(dlg):
+          with modal_ctx as dlg:
+             dlg.ShowModal()
+             dlg.Destory()
     """
 
     def __init__(self):
@@ -25,6 +27,7 @@ class ModalContext(object):
         if self._show:
             return
         self._modal = modal
+        return modal
 
 
 class RestartContext(object):
