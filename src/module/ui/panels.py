@@ -8,6 +8,7 @@ import images
 import listctrls
 from models import MenuBar, MenuAction, MenuView
 from context import modal_ctx
+from event import CountingThread, EVT_COUNT
 
 headings = [
     u"接待时间",
@@ -67,7 +68,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         self.log = log
         tID = wx.NewId()
         sizer = wx.BoxSizer(wx.VERTICAL)
-
+        self.frame = wx.FindWindowById(9999)
         if wx.Platform == "__WXMAC__" and \
                 hasattr(wx.GetApp().GetTopWindow(), "LoadDemo"):
             self.useNative = wx.CheckBox(self, -1, "Use native listctrl")
@@ -127,7 +128,20 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         # for wxGTK
         self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
         # for sync data
-        MenuBar.action.instance.Bind(wx.EVT_MENU, self.OnSyncData, MenuAction.sync_data.instance)
+        MenuBar.action.instance.Bind(
+            wx.EVT_MENU, self.OnSyncData, MenuAction.sync_data.instance)
+        # for auto-sync data
+        MenuBar.action.instance.Bind(
+            wx.EVT_MENU, self.OnToggleAutoSync, MenuAction.auto_sync.instance)
+        # for count event
+        self.frame.Bind(EVT_COUNT, self.OnCount)
+
+    def OnCount(self, e):
+        _, s = e.GetValue()
+        print s
+        if s % 15 == 0:
+            e.auto = True
+            wx.CallAfter(self.OnSyncData, e)
 
     def SetStatusText(self, text):
         status_bar = wx.FindWindowById(9999).GetStatusBar()
@@ -136,14 +150,14 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
     def _handle_popup(self, event):
         # 弹窗提醒用户有待分解的记录
         if getattr(event, 'auto', False):
-            frame = wx.FindWindowById(9999)
-            if frame.IsIconized():
-                frame.Restore()
+
+            if self.frame.IsIconized():
+                self.frame.Restore()
 
             m = MenuView.stay_on_top.instance
             if not m.IsChecked():
                 m.Check()
-                frame.SetWindowStyle(self.GetWindowStyle() | wx.STAY_ON_TOP)
+                self.frame.SetWindowStyle(self.frame.GetWindowStyle() | wx.STAY_ON_TOP)
 
     def OnSyncData(self, event):
         self.SetStatusText(u"正在同步数据......")
@@ -156,7 +170,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 datamap[idx + 1] = tuple(val)
             self.itemDataMap = datamap
             self.list.ClearAll()
-            wx.CallAfter(self.PopulateList)
+            self.PopulateList()
             self.SetStatusText(u'数据同步成功')
             self._handle_popup(event)
         else:
@@ -169,6 +183,16 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 with modal_ctx as dlg:
                     dlg.ShowModal()
                     dlg.Destroy()
+
+    def OnToggleAutoSync(self, e):
+        if e.IsChecked():
+            thd = CountingThread(self.frame, (1, 1))
+            self._auto_sync_thread = thd
+            self.frame.push_thread(thd)
+            thd.start()
+        else:
+            if not self._auto_sync_thread.stopped():
+                self._auto_sync_thread.stop()
 
     def OnUseNative(self, event):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", not event.IsChecked())

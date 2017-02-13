@@ -11,7 +11,7 @@ import wx.lib.mixins.listctrl as listmix
 
 import githubapi
 import images
-from event import EVT_COUNT, CountingThread, StoppableThread
+from src.module.ui.event import EVT_COUNT, CountingThread, StoppableThread
 
 # --------------------
 
@@ -154,49 +154,6 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
     def columnNum(self):
         return len(self.const["headings"])
 
-
-
-
-    def _SyncReceiveList(self, *args, **kwargs):
-        event = args[0]
-        my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
-        data = my.getJdjl(page_size=30)
-        if "Jdjl" in data:
-            rl = data["Jdjl"]
-            signal = self.LC.AddRows(rl)
-            if signal and getattr(event, 'auto', False):
-                # ----- 弹窗提醒用户有待分解的记录
-                if self.IsIconized():
-                    self.Restore()
-                m = self.FindItemInMenuBar(menuId=777)
-                if not m.IsChecked():
-                    m.Check()
-                    self.SetWindowStyle(self.GetWindowStyle() | wx.STAY_ON_TOP)
-                    # self.SetWindowStyle(self.GetWindowStyle() ^ wx.STAY_ON_TOP)
-            datamap = {}
-            for idx, val in enumerate(rl):
-                datamap[idx + 1] = tuple(val)
-            self.itemDataMap = datamap
-
-            self.LC.Hide()
-            self.LC.AdaptWidth(self.columnNum, [1.5, 3, 1, 2, 0.5, 1, 1])
-            self.LC.Show()
-            self.statusbar.SetStatusText(self.const["sync_end_msg"] + ' at ' + get_current_time())
-        else:
-            self.statusbar.SetStatusText('')
-            if modal_context.show is False:
-                with modal_context:
-                    dlg = wx.MessageDialog(self,
-                                           self.const["sync_error_msg"],
-                                           self.const["sync_error_title"],
-                                           wx.OK | wx.ICON_ERROR)
-                    dlg.ShowModal()
-                    dlg.Destroy()
-
-    def OnSyncData(self, e):
-        self.statusbar.SetStatusText(self.const["sync_start_msg"])
-        wx.CallAfter(self._SyncReceiveList, e)
-
     def _initToolbar(self):
         self.tb = tb = self.CreateToolBar()
         tsize = (24, 24)
@@ -255,7 +212,6 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         # causes it to render (more or less, that is).
         tb.Realize()
 
-
     def GetListCtrl(self):
         return self.LC
 
@@ -268,7 +224,6 @@ class Frame(wx.Frame, listmix.ColumnSorterMixin):
         if s % 15 == 0:
             e.auto = True
             self.OnSyncData(e)
-
 
     def OnToggleAutoSync(self, e):
         if e.IsChecked():
@@ -380,5 +335,3 @@ class Panel01(wx.Panel):
         self.sm_up = self.il.Add(images.SmallUpArrow.GetBitmap())
         self.sm_dn = self.il.Add(images.SmallDnArrow.GetBitmap())
         self.LC.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
-
-

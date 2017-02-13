@@ -4,15 +4,17 @@ import sys
 from models import MenuBar, MenuView, MenuAction
 from os import path
 from listbook import TestLB
+
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
 basedir = path.dirname(__file__)
 
+
 class Frame(wx.Frame):
     def __init__(self):
         super(Frame, self).__init__(None, id=9999)
-        self._threads = []
+        self._threads = {}
         self.init_menubar()
         self.status_bar = self.CreateStatusBar()
         TestLB(self, -1, None)
@@ -39,13 +41,13 @@ class Frame(wx.Frame):
         self.SetMenuBar(mb)
 
     def push_thread(self, thread):
-        self._threads.append(thread)
+        self._threads[thread.getName()] = thread
 
-    def get_threads(self):
-        return self._threads
+    def iter_threads(self):
+        return self._threads.itervalues()
 
     def clear_threads(self):
-        for thd in self.get_threads():
+        for thd in self.iter_threads():
             if not thd.stopped():
                 thd.stop()
 
