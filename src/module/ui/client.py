@@ -94,16 +94,22 @@ class MinYuanClient(requests.Session):
             ret["errMsg"] = e
         return ret
 
+    def validate_response(self, response):
+        return 'response' in response
+
     def login(self, username, password):
         resp = self.fetch(URI_LOGIN, params={
             "usercode": username,
             "password": hashlib.md5(password).hexdigest(),
             "rdnum": random.random()
         })
-        soup = get_soup(resp["response"].content)
-        fr = soup.find(attrs={"result": "true"})
-        if not fr:
-            raise Exception("login failed")
+        if self.validate_response(resp):
+            soup = get_soup(resp["response"].content)
+            fr = soup.find(attrs={"result": "true"})
+            if not fr:
+                raise Exception("login failed")
+            return
+        return resp
 
     def getJdjl(self, page_num=1, page_size=20):
         """
@@ -134,7 +140,7 @@ class MinYuanClient(requests.Session):
 
         )
         resp_data = self.fetch(URI_GRID_DATA, params=params)
-        if "response" in resp_data:
+        if self.validate_response(resp_data):
             resp = resp_data.pop("response")
             # q = Q(resp.content)
             soup = get_soup(resp.text)
@@ -150,7 +156,7 @@ class MinYuanClient(requests.Session):
 
     def getUsers(self):
         resp_data = self.fetch(URI_USER_TREE)
-        if "response" in resp_data:
+        if self.validate_response(resp_data):
             resp = resp_data.pop("response")
             stuff = resp.text
             startPos = stuff.find('<table class="layout"')
@@ -200,7 +206,7 @@ class MinYuanClient(requests.Session):
             cp="",
         )
         resp_data = self.fetch(URI_GRID_DATA, params=params)
-        if "response" in resp_data:
+        if self.validate_response(resp_data):
             resp = resp_data.pop("response")
             # q = Q(resp.content)
             soup = get_soup(resp.text)
@@ -234,7 +240,7 @@ class MinYuanClient(requests.Session):
         )
         # ----------任务编号----------
         resp_data = self.fetch(URI_RWCL_EDIT, params=params, data=data)
-        if "response" in resp_data:
+        if self.validate_response(resp_data):
             resp = resp_data.pop("response")
             # q = Q(resp.content)
             soup = get_soup(resp.text)
@@ -299,7 +305,7 @@ class MinYuanClient(requests.Session):
             funcid="01020502",
         )
         resp_data = self.postUrl(URI_RWCL_EDIT, params=params, data=data)
-        if 'response' in resp_data:
+        if self.validate_response(resp_data):
             resp = resp_data.pop('response')
             soup = get_soup(resp.text)
             e = soup.find(attrs={"name": "txtTaskGUID"})
@@ -320,7 +326,7 @@ class MinYuanClient(requests.Session):
         )
 
         resp_data = self.postUrl(URI_RWCL_WORK, params=params, data=data)
-        if 'response' in resp_data:
+        if self.validate_response(resp_data):
             resp = resp_data.pop("response")
             # q = Q(resp.content)
             soup = get_soup(resp.text)
@@ -387,7 +393,7 @@ class MinYuanClient(requests.Session):
             cp="",
         )
         resp_data = self.fetch(URI_GRID_DATA, params=params)
-        if 'response' in resp_data:
+        if self.validate_response(resp_data):
             response = resp_data.pop('response')
             soup = get_soup(response.text)
             ret = []

@@ -7,6 +7,7 @@ from wx.lib.mixins.listctrl import ColumnSorterMixin
 import images
 import listctrls
 from models import MenuBar, MenuAction
+from context import modal_ctx
 
 headings = [
     u"接待时间",
@@ -65,7 +66,6 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS)
         self.log = log
         tID = wx.NewId()
-
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         if wx.Platform == "__WXMAC__" and \
@@ -118,7 +118,6 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
         self.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColEndDrag, self.list)
         self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEdit, self.list)
-        # parent.Bind(wx.EVT_SIZE, self.OnSize)
         self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
         self.list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
 
@@ -138,10 +137,9 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         self.SetStatusText(u"正在同步数据......")
         my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
         data = my.getJdjl(page_size=30)
-        # print data
         if "Jdjl" in data:
             rl = data["Jdjl"]
-            # if signal and getattr(event, 'auto', False):
+            # if getattr(event, 'auto', False):
             #     # ----- 弹窗提醒用户有待分解的记录
             #     if self.IsIconized():
             #         self.Restore()
@@ -154,23 +152,19 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
             for idx, val in enumerate(rl):
                 datamap[idx + 1] = tuple(val)
             self.itemDataMap = datamap
-            self.PopulateList()
-            # self.list.Hide()
-            # self.list.AdaptWidth(self.columnNum, [1.5, 3, 1, 2, 0.5, 1, 1])
-            # self.list.Show()
-            # self.statusbar.SetStatusText(self.const["sync_end_msg"] + ' at ' + get_current_time())
+            wx.CallAfter(self.PopulateList)
         else:
-            self.statusbar.SetStatusText('')
-            if modal_context.show is False:
-                with modal_context:
+            self.SetStatusText('')
+            if modal_ctx.show is False:
+                with modal_ctx:
                     dlg = wx.MessageDialog(self,
-                                           self.const["sync_error_msg"],
-                                           self.const["sync_error_title"],
+                                           u"请确认网络正常并且VPN已开启",
+                                           u"连接错误",
                                            wx.OK | wx.ICON_ERROR)
                     dlg.ShowModal()
                     dlg.Destroy()
 
-        self.SetStatusText('')
+        self.SetStatusText(u'数据同步成功')
 
     def OnUseNative(self, event):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", not event.IsChecked())
@@ -214,7 +208,6 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 self.list.InsertColumnInfo(6, info)
             return
         items = self.itemDataMap.items()
-        popUp = False
         for key, data in items:
             index = self.list.InsertImageStringItem(sys.maxint, data[0], self.idx1)
             item = self.list.GetItem(index)
@@ -225,7 +218,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 elif data[-1] == u'待分解':
                     item.SetTextColour(wx.NamedColour("RED"))
                     item.SetFont(item.GetFont().Bold())
-                    popUp = True
+                    self._popup = True
                 elif data[-1] == u'分解完毕':
                     item.SetTextColour(wx.NamedColour("BLUE"))
                     item.SetFont(item.GetFont().Bold())
@@ -351,12 +344,12 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
             self.popupID5 = wx.NewId()
             self.popupID6 = wx.NewId()
 
-            self.Bind(wx.EVT_MENU, self.OnPopupOne, id=self.popupID1)
-            self.Bind(wx.EVT_MENU, self.OnPopupTwo, id=self.popupID2)
-            self.Bind(wx.EVT_MENU, self.OnPopupThree, id=self.popupID3)
-            self.Bind(wx.EVT_MENU, self.OnPopupFour, id=self.popupID4)
-            self.Bind(wx.EVT_MENU, self.OnPopupFive, id=self.popupID5)
-            self.Bind(wx.EVT_MENU, self.OnPopupSix, id=self.popupID6)
+            # self.Bind(wx.EVT_MENU, self.OnPopupOne, id=self.popupID1)
+            # self.Bind(wx.EVT_MENU, self.OnPopupTwo, id=self.popupID2)
+            # self.Bind(wx.EVT_MENU, self.OnPopupThree, id=self.popupID3)
+            # self.Bind(wx.EVT_MENU, self.OnPopupFour, id=self.popupID4)
+            # self.Bind(wx.EVT_MENU, self.OnPopupFive, id=self.popupID5)
+            # self.Bind(wx.EVT_MENU, self.OnPopupSix, id=self.popupID6)
 
         # make a menu
         menu = wx.Menu()
