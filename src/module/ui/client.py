@@ -151,7 +151,7 @@ class MinYuanClient(requests.Session):
             for tr in table.find_all(name="tr"):
                 r = [td.getText() for td in tr.find_all(name="td")[3:]]
                 rows.append(tuple(r))
-            resp_data["Jdjl"] = rows
+            resp_data["rows"] = rows
         return resp_data
 
     def getUsers(self):

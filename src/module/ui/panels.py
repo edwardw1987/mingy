@@ -6,7 +6,7 @@ from wx.lib.mixins.listctrl import ColumnSorterMixin
 
 import images
 import listctrls
-from models import MenuBar, MenuAction
+from models import MenuBar, MenuAction, MenuView
 from context import modal_ctx
 
 headings = [
@@ -133,39 +133,41 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         status_bar = wx.FindWindowById(9999).GetStatusBar()
         status_bar.SetStatusText(text)
 
+    def _handle_popup(self, event):
+        # 弹窗提醒用户有待分解的记录
+        if getattr(event, 'auto', False):
+            frame = wx.FindWindowById(9999)
+            if frame.IsIconized():
+                frame.Restore()
+
+            m = MenuView.stay_on_top.instance
+            if not m.IsChecked():
+                m.Check()
+                frame.SetWindowStyle(self.GetWindowStyle() | wx.STAY_ON_TOP)
+
     def OnSyncData(self, event):
         self.SetStatusText(u"正在同步数据......")
         my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
         data = my.getJdjl(page_size=30)
-        if "Jdjl" in data:
-            rl = data["Jdjl"]
-            # if getattr(event, 'auto', False):
-            #     # ----- 弹窗提醒用户有待分解的记录
-            #     if self.IsIconized():
-            #         self.Restore()
-            #     m = self.FindItemInMenuBar(menuId=777)
-            #     if not m.IsChecked():
-            #         m.Check()
-            #         self.SetWindowStyle(self.GetWindowStyle() | wx.STAY_ON_TOP)
-            #         # self.SetWindowStyle(self.GetWindowStyle() ^ wx.STAY_ON_TOP)
+        if data.get("rows"):
+            rows = data["rows"]
             datamap = {}
-            for idx, val in enumerate(rl):
+            for idx, val in enumerate(rows):
                 datamap[idx + 1] = tuple(val)
             self.itemDataMap = datamap
             wx.CallAfter(self.PopulateList)
+            self.SetStatusText(u'数据同步成功')
+            self._handle_popup(event)
         else:
             self.SetStatusText('')
             dlg = wx.MessageDialog(self,
                                    u"请确认网络正常并且VPN已开启",
                                    u"连接错误",
                                    wx.OK | wx.ICON_ERROR)
-            modal_ctx.set_modal(dlg)
-            with modal_ctx as dlg:
-                if dlg:
+            if modal_ctx.set_modal(dlg):
+                with modal_ctx as dlg:
                     dlg.ShowModal()
                     dlg.Destroy()
-
-        self.SetStatusText(u'数据同步成功')
 
     def OnUseNative(self, event):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", not event.IsChecked())
