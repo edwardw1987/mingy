@@ -6,6 +6,15 @@ import images
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 from models import MenuBar, MenuAction
 
+headings = [
+    u"接待时间",
+    u"主题",
+    u"请求来源",
+    u"房间",
+    u"服务请求人",
+    u"接待人",
+    u"分解状态",
+]
 
 class ColoredPanel(wx.Window):
     def __init__(self, parent, color):
@@ -92,7 +101,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         # Now that the list exists we can init the other base class,
         # see wx/lib/mixins/listctrl.py
         # self.itemDataMap = musicdata
-        ColumnSorterMixin.__init__(self, 3)
+        ColumnSorterMixin.__init__(self, len(headings))
         # self.SortListItems(0, True)
 
         self.SetSizer(sizer)
@@ -160,15 +169,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         wx.GetApp().GetTopWindow().LoadDemo("ListCtrl")
 
     def PopulateList(self, heading_only=False):
-        texts = [
-            u"接待时间",
-            u"主题",
-            u"请求来源",
-            u"房间",
-            u"服务请求人",
-            u"接待人",
-            u"分解状态",
-        ]
+
         if heading_only:
 
             if 0:
@@ -182,27 +183,27 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
                 info.m_image = -1
                 info.m_format = 0
-                info.m_text = texts[0]
+                info.m_text = headings[0]
                 self.list.InsertColumnInfo(0, info)
 
                 info.m_format = wx.LIST_FORMAT_RIGHT
-                info.m_text = texts[1]
+                info.m_text = headings[1]
                 self.list.InsertColumnInfo(1, info)
 
                 info.m_format = 0
-                info.m_text = texts[2]
+                info.m_text = headings[2]
                 self.list.InsertColumnInfo(2, info)
                 info.m_format = 0
-                info.m_text = texts[3]
+                info.m_text = headings[3]
                 self.list.InsertColumnInfo(3, info)
                 info.m_format = 0
-                info.m_text = texts[4]
+                info.m_text = headings[4]
                 self.list.InsertColumnInfo(4, info)
                 info.m_format = 0
-                info.m_text = texts[5]
+                info.m_text = headings[5]
                 self.list.InsertColumnInfo(5, info)
                 info.m_format = 0
-                info.m_text = texts[6]
+                info.m_text = headings[6]
                 self.list.InsertColumnInfo(6, info)
             return
         items = self.itemDataMap.items()
