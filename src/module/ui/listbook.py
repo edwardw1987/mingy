@@ -16,7 +16,7 @@ class TestLB(wx.Listbook):
                              # wx.BK_RIGHT
                              )
         self.log = log
-        self.frame = parent
+        self.frame = wx.FindWindowById(9999)
         # make an image list using the LBXX images
         il = wx.ImageList(32, 32)
         for x in range(12):

@@ -23,13 +23,13 @@ class ColoredPanel(wx.Window):
 
 class WeChatReminderPanel(wx.Panel, ColumnSorterMixin):
     headings = [
+        u"分解状态",
         u"接待时间",
         u"主题",
         u"请求来源",
         u"房间",
         u"服务请求人",
         u"接待人",
-        u"分解状态",
     ]
 
     def __init__(self, parent, log):
@@ -226,9 +226,9 @@ class WeChatReminderPanel(wx.Panel, ColumnSorterMixin):
             return
         items = self.itemDataMap.items()
         for key, data in items:
-            index = self.list.InsertImageStringItem(sys.maxint, data[0], self.idx1)
+            index = self.list.InsertImageStringItem(sys.maxint, data[-1], self.idx1)
             item = self.list.GetItem(index)
-            for pos, val in enumerate(data[1:]):
+            for pos, val in enumerate(data[:-1]):
                 self.list.SetStringItem(index, pos + 1, val)
                 if data[-1] == u"已关闭":
                     item.SetTextColour(wx.NamedColour("GRAY"))

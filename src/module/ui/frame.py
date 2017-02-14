@@ -35,13 +35,25 @@ class Frame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
     def _layout(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.log = LogTextCtrl(self)
-        listbook = TestLB(self, -1, None)
-        sizer.Add(listbook, 7, wx.EXPAND)
-        sizer.Add(self.log, 3, wx.EXPAND)
-        self.SetSizer(sizer)
-        self.Layout()
+        splitter = wx.SplitterWindow(self)
+
+        sty = wx.BORDER_SUNKEN
+
+        p1 = wx.Window(splitter, style=sty)
+
+        p2 = wx.Window(splitter, style=sty)
+
+        splitter.SetMinimumPaneSize(20)
+        splitter.SplitHorizontally(p1, p2, -100)
+
+        sizer1 = wx.BoxSizer(wx.VERTICAL)
+        sizer2 = wx.BoxSizer(wx.VERTICAL)
+        self.log = LogTextCtrl(p2)
+        listbook = TestLB(p1, -1, None)
+        sizer1.Add(listbook, 1, wx.EXPAND)
+        sizer2.Add(self.log, 1, wx.EXPAND)
+        p1.SetSizer(sizer1)
+        p2.SetSizer(sizer2)
 
     def init_menubar(self):
         mb = MenuBar.create()
