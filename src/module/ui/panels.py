@@ -170,12 +170,12 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
     def OnToggleAutoSync(self, e):
         if e.IsChecked():
             thd = CountingThread(self.list, (1, 1))
-            self._auto_sync_thread = thd
+            self._counting_thread = thd
             self.frame.push_thread(thd)
             thd.start()
         else:
-            if not self._auto_sync_thread.stopped():
-                self._auto_sync_thread.stop()
+            if not self._counting_thread.stopped():
+                self._counting_thread.stop()
 
     def OnUseNative(self, event):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", not event.IsChecked())

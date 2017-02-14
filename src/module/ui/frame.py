@@ -5,7 +5,7 @@ from models import MenuBar, MenuView, MenuAction
 from os import path
 from listbook import TestLB
 from event import StoppableThread
-from types import InstanceType, FunctionType, UnboundMethodType
+from types import FunctionType, UnboundMethodType
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -52,7 +52,7 @@ class Frame(wx.Frame):
         """
         if type(thread) in (FunctionType, UnboundMethodType):
             thread = StoppableThread(target=thread, args=args, kwargs=kwargs)
-        elif type(thread) is InstanceType:
+        elif hasattr(thread, '__class__'):
             t_cls = thread.__class__
             if not issubclass(t_cls, StoppableThread):
                 raise TypeError("'%' is not dervied from `StoppableThread`" % type(t_cls))
