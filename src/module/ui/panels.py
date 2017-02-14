@@ -10,6 +10,7 @@ from models import MenuBar, MenuAction, MenuView
 from context import modal_ctx
 from event import CountingThread, EVT_COUNT
 from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
+from datetime import datetime
 
 headings = [
     u"接待时间",
@@ -97,7 +98,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
         # for sync data
         MenuBar.action.instance.Bind(
-            wx.EVT_MENU, self.OnSyncData, MenuAction.sync_data.instance)
+            wx.EVT_MENU, self.OnSyncReceives, MenuAction.sync_data.instance)
         # for auto-sync data
         MenuBar.action.instance.Bind(
             wx.EVT_MENU, self.OnToggleAutoSync, MenuAction.auto_sync.instance)
@@ -109,7 +110,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         if s % 15 == 0:
             e.auto = True
             # self.frame.start_thread(self.OnSyncData, e)
-            self.OnSyncData(e)
+            self.OnSyncReceives(e)
 
     def SetStatusText(self, text):
         status_bar = wx.FindWindowById(9999).GetStatusBar()
@@ -127,7 +128,8 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 m.Check()
                 self.frame.SetWindowStyle(self.frame.GetWindowStyle() | wx.STAY_ON_TOP)
 
-    def OnSyncData(self, event):
+    def _do_sync_receives(self, event):
+        '同步接单记录过程'
         self.SetStatusText(u"正在同步数据......")
         my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
         data = my.getJdjl(page_size=30)
@@ -139,7 +141,8 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
             self.itemDataMap = datamap
             self.list.ClearAll()
             wx.CallAfter(self.PopulateList)
-            self.SetStatusText(u'数据同步成功')
+            timestamp = datetime.now().strftime("%Y-%m-%d %X")
+            self.SetStatusText(u'数据同步成功 at %s' % timestamp)
             self._handle_popup(event)
         else:
             self.SetStatusText('')
@@ -151,6 +154,18 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 with modal_ctx as dlg:
                     dlg.ShowModal()
                     dlg.Destroy()
+
+    def OnSyncReceives(self, event):
+        # 新建一个子线程，用来同步接单记录，可以避免界面阻塞卡死
+        thd = self.frame.push_thread(self._do_sync_receives, event)
+        _sync_thread = getattr(self, '_sync_thread', None)
+        # 如果旧线程isAlive则返回, 否则stop, delete旧线程
+        if _sync_thread:
+            if _sync_thread.isAlive():
+                return
+            self.frame.delete_thread(_sync_thread)
+        self._sync_thread = thd
+        thd.start()
 
     def OnToggleAutoSync(self, e):
         if e.IsChecked():

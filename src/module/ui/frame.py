@@ -5,6 +5,7 @@ from models import MenuBar, MenuView, MenuAction
 from os import path
 from listbook import TestLB
 from event import StoppableThread
+from types import InstanceType, FunctionType, UnboundMethodType
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -41,13 +42,36 @@ class Frame(wx.Frame):
         )
         self.SetMenuBar(mb)
 
-    def start_thread(self, fn, *args, **kwargs):
-        thd = StoppableThread(target=fn, args=args, kwargs=kwargs)
-        self.push_thread(thd)
-        thd.start()
+    def _handle_thread(self, thread, *args, **kwargs):
+        """
+        :param thread:
+        accepts `callable`, or instances of subclass derived from `StoppableThread`
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        if type(thread) in (FunctionType, UnboundMethodType):
+            thread = StoppableThread(target=thread, args=args, kwargs=kwargs)
+        elif type(thread) is InstanceType:
+            t_cls = thread.__class__
+            if not issubclass(t_cls, StoppableThread):
+                raise TypeError("'%' is not dervied from `StoppableThread`" % type(t_cls))
+        else:
+            raise TypeError("Invalid type '%s'" % type(thread))
+        return thread
 
-    def push_thread(self, thread):
-        self._threads[thread.getName()] = thread
+    def push_thread(self, thread, *args, **kwargs):
+        handled_thread = self._handle_thread(thread, *args, **kwargs)
+        self._threads[handled_thread.getName()] = handled_thread
+        return handled_thread
+
+    def pop_thread(self, thread):
+        return self._threads.pop(thread.getName(), None)
+
+    def delete_thread(self, thread):
+        thread_name = thread.getName()
+        if thread_name in self._threads:
+            del self._threads[thread_name]
 
     def iter_threads(self):
         return self._threads.itervalues()
