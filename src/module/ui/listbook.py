@@ -16,7 +16,7 @@ class TestLB(wx.Listbook):
                              # wx.BK_RIGHT
                              )
         self.log = log
-
+        self.frame = parent
         # make an image list using the LBXX images
         il = wx.ImageList(32, 32)
         for x in range(12):
@@ -30,7 +30,7 @@ class TestLB(wx.Listbook):
         imID = 0
         for colour in sidebar_list:
             if imID == 0:
-                win = self.makeColorPanel(colour, panel=panels.TestListCtrlPanel(self, -1))
+                win = self.makeColorPanel(colour, panel=panels.WeChatReminderPanel(self, self.frame.log))
             else:
                 win = self.makeColorPanel(colour)
             self.AddPage(win, colour, imageId=imID)

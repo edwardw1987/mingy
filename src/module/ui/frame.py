@@ -6,6 +6,7 @@ from os import path
 from listbook import TestLB
 from event import StoppableThread
 from types import FunctionType, UnboundMethodType
+from textctrls import LogTextCtrl
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
@@ -19,7 +20,6 @@ class Frame(wx.Frame):
         self._threads = {}
         self.init_menubar()
         self.status_bar = self.CreateStatusBar()
-        TestLB(self, -1, None)
         # ==========common apply==========
         self.SetTitle(u"明源自动化客户端")
         icon = path.join(basedir, '..\\..\\launcher\\rat_head.ico')
@@ -29,8 +29,19 @@ class Frame(wx.Frame):
         self.SetSize(size)
         self.SetMinSize(minsize)
         self.Center()
+
+        self._layout()
         # ==========event==========
         self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+    def _layout(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.log = LogTextCtrl(self)
+        listbook = TestLB(self, -1, None)
+        sizer.Add(listbook, 7, wx.EXPAND)
+        sizer.Add(self.log, 3, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.Layout()
 
     def init_menubar(self):
         mb = MenuBar.create()
