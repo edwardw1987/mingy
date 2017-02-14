@@ -32,8 +32,8 @@ class WeChatReminderPanel(wx.Panel, ColumnSorterMixin):
         u"接待人",
     ]
 
-    def __init__(self, parent, log):
-        wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS)
+    def __init__(self, parent, log, name):
+        wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS, name=name)
         self.log = log
         self.listbook = parent
         self._restore_frame = False
@@ -148,7 +148,9 @@ class WeChatReminderPanel(wx.Panel, ColumnSorterMixin):
             self.list.ClearAll()
             wx.CallAfter(self.PopulateList)
             timestamp = datetime.now().strftime("%Y-%m-%d %X")
-            self.SetStatusText(u'数据同步成功 at %s' % timestamp)
+            msg = u'%s数据同步成功 at %s' % (self.Name, timestamp)
+            self.SetStatusText(msg)
+            wx.CallAfter(self.log.WriteText, msg)
             self._handle_restore_frame(event)
         else:
             self.SetStatusText('')

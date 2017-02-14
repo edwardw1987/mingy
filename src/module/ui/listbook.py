@@ -30,7 +30,9 @@ class TestLB(wx.Listbook):
         imID = 0
         for colour in sidebar_list:
             if imID == 0:
-                win = self.makeColorPanel(colour, panel=panels.WeChatReminderPanel(self, self.frame.log))
+                win = self.makeColorPanel(
+                    colour,
+                    panel=panels.WeChatReminderPanel(self, self.frame.log, sidebar_list[0]))
             else:
                 win = self.makeColorPanel(colour)
             self.AddPage(win, colour, imageId=imID)
