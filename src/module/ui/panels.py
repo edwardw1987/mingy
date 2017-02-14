@@ -35,6 +35,8 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
     def __init__(self, parent, log):
         wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS)
         self.log = log
+        self.listbook = parent
+        self._restore_frame = False
         tID = wx.NewId()
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.frame = wx.FindWindowById(9999)
@@ -116,10 +118,11 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         status_bar = wx.FindWindowById(9999).GetStatusBar()
         status_bar.SetStatusText(text)
 
-    def _handle_popup(self, event):
+    def _handle_restore_frame(self, event):
         # 弹窗提醒用户有待分解的记录
+        if not self._restore_frame:
+            return
         if getattr(event, 'auto', False):
-
             if self.frame.IsIconized():
                 self.frame.Restore()
 
@@ -130,6 +133,8 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
 
     def _do_sync_receives(self, event):
         '同步接单记录过程'
+        self.listbook.SetSelection(0)
+        self.frame.Refresh()
         self.SetStatusText(u"正在同步数据......")
         my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
         data = my.getJdjl(page_size=30)
@@ -143,7 +148,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
             wx.CallAfter(self.PopulateList)
             timestamp = datetime.now().strftime("%Y-%m-%d %X")
             self.SetStatusText(u'数据同步成功 at %s' % timestamp)
-            self._handle_popup(event)
+            self._handle_restore_frame(event)
         else:
             self.SetStatusText('')
             dlg = wx.MessageDialog(self,
@@ -182,7 +187,6 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         wx.GetApp().GetTopWindow().LoadDemo("ListCtrl")
 
     def PopulateList(self, heading_only=False):
-
         if 0:
             # for normal, simple columns, you can add them like this:
             self.list.InsertColumn(0, "Artist")
@@ -229,7 +233,7 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
                 elif data[-1] == u'待分解':
                     item.SetTextColour(wx.NamedColour("RED"))
                     item.SetFont(item.GetFont().Bold())
-                    self._popup = True
+                    self._restore_frame = True
                 elif data[-1] == u'分解完毕':
                     item.SetTextColour(wx.NamedColour("BLUE"))
                     item.SetFont(item.GetFont().Bold())
@@ -252,7 +256,6 @@ class TestListCtrlPanel(wx.Panel, ColumnSorterMixin):
         # self.list.SetItem(item)
 
         self.currentItem = 0
-
     # Used by the ColumnSorterMixin, see wx/lib/mixins/listctrl.py
     def GetListCtrl(self):
         return self.list
