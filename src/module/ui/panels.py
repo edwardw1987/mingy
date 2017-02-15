@@ -6,11 +6,12 @@ from wx.lib.mixins.listctrl import ColumnSorterMixin
 
 import images
 import listctrls
-from models import MenuBar, MenuAction, MenuView
+from models import MenuBar, MenuAction, MenuView, MenuSetting
 from context import modal_ctx
 from event import CountingThread, EVT_COUNT
 from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 from datetime import datetime
+from dialogs import AutoSyncDialog
 
 
 class ColoredPanel(wx.Window):
@@ -105,6 +106,9 @@ class WeChatReminderPanel(wx.Panel, ColumnSorterMixin):
         # for auto-sync data
         MenuBar.action.instance.Bind(
             wx.EVT_MENU, self.OnToggleAutoSync, MenuAction.auto_sync.instance)
+        # for set auto sync
+        MenuBar.settings.instance.Bind(
+            wx.EVT_MENU, self.OnSetAutoSync, MenuSetting.auto_sync.instance)
         # for count event
         self.list.Bind(EVT_COUNT, self.OnCount)
 
@@ -185,6 +189,11 @@ class WeChatReminderPanel(wx.Panel, ColumnSorterMixin):
             if not self._counting_thread.stopped():
                 self._counting_thread.stop()
 
+    def OnSetAutoSync(self, e):
+        dlg = AutoSyncDialog(self, title='title')
+        dlg.CenterOnParent()
+        dlg.ShowModal()
+    # ----------------------------------------------------
     def OnUseNative(self, event):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", not event.IsChecked())
         wx.GetApp().GetTopWindow().LoadDemo("ListCtrl")
