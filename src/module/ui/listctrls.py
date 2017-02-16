@@ -14,7 +14,7 @@ class BaseListCtrl(wx.ListCtrl,
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1,
                              style=wx.LC_REPORT |
-                                   wx.LC_SORT_DESCENDING|
+                                   wx.LC_SORT_DESCENDING |
                                    wx.LC_ALIGN_LEFT)
         ListCtrlAutoWidthMixin.__init__(self)
         ColumnSorterMixin.__init__(self, len(self.headings))
@@ -74,7 +74,7 @@ class ReceivesListCtrl(Factory, BaseListCtrl):
 
     def AddRows(self, data_list):
         # self.DeleteAllColumns()
-        # self.DeleteAllItems()
+        self.DeleteAllItems()
         # self.ClearAll()
 
         for row_num, row_data in enumerate(data_list):
@@ -100,37 +100,3 @@ class ReceivesListCtrl(Factory, BaseListCtrl):
         self.SetColumnWidth(2, wx.LIST_AUTOSIZE)
 
         return
-
-
-if __name__ == '__main__':
-    app = wx.App()
-    fr = wx.Frame(None)
-    lc = ReceivesListCtrl.create(fr)
-    rows = [(u'2017-02-27 15:27',
-             u'\u4fdd\u5229\u827e\u8f69-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04121\u53f7-1-702-\u54a8\u8be2-20170227',
-             u'\u5fae\u4fe1', u'\u4fdd\u5229\u827e\u8f69-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04121\u53f7-1-702',
-             u'\u8881\u9716', u'\u5f90\u8bd7\u4fca', u'\u5df2\u5173\u95ed'), (u'2017-02-24 15:24',
-                                                                              u'\u4fdd\u5229\u827e\u8f69-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04138\u53f7-1802-\u54a8\u8be2-20170224',
-                                                                              u'\u5fae\u4fe1',
-                                                                              u'\u4fdd\u5229\u827e\u8f69-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04138\u53f7-1802',
-                                                                              u'\u9ec4\u83b9', u'\u5f90\u8bd7\u4fca',
-                                                                              u'\u5df2\u5173\u95ed'), (
-                u'2017-02-23 15:23',
-                u'\u4fdd\u5229\u827e\u8f69-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04138\u53f7-1702-\u54a8\u8be2-20170223',
-                u'\u5fae\u4fe1', u'\u4fdd\u5229\u827e\u8f69-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04138\u53f7-1702',
-                u'\u987e\u5b89\u821f', u'\u5f90\u8bd7\u4fca', u'\u5df2\u5173\u95ed'), (u'2017-02-23 12:43',
-                                                                                       u'\u4e0a\u6d77\u53f6\u4e0a\u6d77-\u4fdd\u5229\u53f6\u90fd-\u516c\u5bd3\u533a-\u8054\u6768\u8def1078\u5f047\u53f7-604-\u6295\u8bc9-20170223',
-                                                                                       u'\u5fae\u4fe1',
-                                                                                       u'\u4e0a\u6d77\u53f6\u4e0a\u6d77-\u4fdd\u5229\u53f6\u90fd-\u516c\u5bd3\u533a-\u8054\u6768\u8def1078\u5f047\u53f7-604',
-                                                                                       u'\u970d\u6842\u5c71',
-                                                                                       u'\u5f90\u8bd7\u4fca',
-                                                                                       u'\u5206\u89e3\u5b8c\u6bd5'), (
-                u'2017-02-21 13:38',
-                u'\u4e0a\u6d77\u53f6\u4e0a\u6d77-\u4fdd\u5229\u53f6\u90fd-\u516c\u5bd3\u533a-\u8054\u6768\u8def1078\u5f045\u53f7-3204-\u54a8\u8be2-20170221',
-                u'\u5fae\u4fe1',
-                u'\u4e0a\u6d77\u53f6\u4e0a\u6d77-\u4fdd\u5229\u53f6\u90fd-\u516c\u5bd3\u533a-\u8054\u6768\u8def1078\u5f045\u53f7-3204',
-                u'\u4fdd\u5229\u827e\u8f69-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04120\u53f7-1001', u'\u8d75\u8f89',
-                u'\u5468\u4f73\u8363', u'\u5206\u89e3\u5b8c\u6bd5')]
-    lc.AddRows(rows)
-    fr.Show()
-    app.MainLoop()
