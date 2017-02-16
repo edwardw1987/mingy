@@ -57,11 +57,11 @@ class Frame(wx.Frame):
 
     def init_menubar(self):
         mb = MenuBar.create()
-        MenuBar.view.instance.Bind(
+        MenuBar.menus.view.Bind(
             wx.EVT_MENU, self.OnSwitchTop, MenuView.stay_on_top.instance
         )
-        MenuBar.action.instance.Bind(
-            wx.EVT_MENU, self.OnClose, MenuAction.close.instance
+        MenuBar.menus.action.Bind(
+            wx.EVT_MENU, self.OnClose, MenuAction.items.close
         )
         self.SetMenuBar(mb)
 

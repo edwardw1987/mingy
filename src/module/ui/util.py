@@ -10,10 +10,39 @@ def get_func_doc_args(fn):
     return set(pattern.findall(fn.__doc__))
 
 
+class WidgetArray(object):
+    def __init__(self, *widgets):
+        self._widgets = self._handle(widgets)
+
+    def _handle(self, widgets):
+        for idx, widget in enumerate(widgets):
+            widget.index = idx
+            if widget.get('name'):
+                widget.set('name',
+                           widget.get('name').replace(' ', '_').lower())
+        return widgets
+
+    def __getattr__(self, name):
+        for w in self._widgets:
+            if w.get('name') == name:
+                return w.get_instance()
+
+    def __len__(self):
+        return len(self._widgets)
+
+    def __repr__(self):
+        return str(self._widgets)
+
+    def __getitem__(self, index):
+        return self._widgets[index]
+
+    def __iter__(self):
+        return iter(self._widgets)
+
+
 class Widget(object):
-    def __init__(self, wx_factory, pos=-1, **kwargs):
+    def __init__(self, wx_factory, **kwargs):
         super(Widget, self).__init__()
-        self._pos = pos
         self._instance = None
         self._factory = wx_factory
         self._init_args = {}
@@ -22,6 +51,9 @@ class Widget(object):
 
     def get(self, attr_name):
         return self._attr.get(attr_name)
+
+    def set(self, attr_name, value):
+        self._attr[attr_name] = value
 
     def get_instance(self):
         return self._instance
@@ -54,14 +86,15 @@ class Factory(object):
 
     @classmethod
     def iter_widegts(cls):
-        ws = {}
         for key in dir(cls):
             if not key.startswith('_'):
                 val = getattr(cls, key)
-                if issubclass(val.__class__, Widget):
-                    ws[key] = val
-
-        return sorted(ws.values(), key=lambda x: x._pos)
+                v_cls = val.__class__
+                if issubclass(v_cls, Widget):
+                    yield val
+                elif issubclass(v_cls, WidgetArray):
+                    for w in val:
+                        yield w
 
     @classmethod
     def handle_widget(cls, widget, *args, **kwargs):
@@ -86,3 +119,14 @@ class MenuFactory(Factory):
     def create(cls, menu_widget):
         for mi_widget in cls.iter_widegts():
             menu_widget.instance.AppendItem(mi_widget.create())
+
+
+if __name__ == '__main__':
+    import wx
+
+    arr = WidgetArray(Widget(wx.ListItem))
+    # for i in arr:
+    #     print i
+    # print arr[0]
+    # arr.push(88)
+    print arr.a
