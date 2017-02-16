@@ -22,9 +22,9 @@ class MenuView(MenuFactory, wx.Menu):
 
 class MenuBar(MenuBarFactory, wx.MenuBar):
     menus = WidgetArray(
-        Widget(MenuAction, pos=1, text=u'操作(&O)', name="action"),
-        Widget(MenuView, pos=2, text=u"查看(&V)", name="view"),
-        Widget(MenuSetting, pos=3, text=u"设置(&S)", name="settings"),
+        Widget(MenuAction, text=u'操作(&O)', name="action"),
+        Widget(MenuView, text=u"查看(&V)", name="view"),
+        Widget(MenuSetting, text=u"设置(&S)", name="settings"),
     )
 
 def main():

@@ -23,16 +23,6 @@ class ColoredPanel(wx.Window):
 
 
 class WeChatReminderPanel(wx.Panel):
-    headings = [
-        u"分解状态",
-        u"接待时间",
-        u"主题",
-        u"请求来源",
-        u"房间",
-        u"服务请求人",
-        u"接待人",
-    ]
-
     def __init__(self, parent, log, name):
         wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS, name=name)
         self.log = log
@@ -42,34 +32,35 @@ class WeChatReminderPanel(wx.Panel):
         tID = wx.NewId()
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.frame = wx.FindWindowById(9999)
-        self.list = listctrls.ReceivesListCtrl(self)
+        self.list = listctrls.ReceivesListCtrl.create(self)
+        li = self.list.headings[0]
+        li.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+        self.list.SetColumn(0, li)
         sizer.Add(self.list, 1, wx.EXPAND)
-
-        self.PopulateList(heading_only=True)
-
+        #
         # self.list.SortListItems(0, True)
-
+        #
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
 
-        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
-        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self.list)
-        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
-        self.Bind(wx.EVT_LIST_DELETE_ITEM, self.OnItemDelete, self.list)
+        # self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
+        # self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self.list)
+        # self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
+        # self.Bind(wx.EVT_LIST_DELETE_ITEM, self.OnItemDelete, self.list)
         self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick, self.list)
-        self.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.OnColRightClick, self.list)
-        self.Bind(wx.EVT_LIST_COL_BEGIN_DRAG, self.OnColBeginDrag, self.list)
+        # self.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.OnColRightClick, self.list)
+        # self.Bind(wx.EVT_LIST_COL_BEGIN_DRAG, self.OnColBeginDrag, self.list)
         self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
-        self.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColEndDrag, self.list)
-        self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEdit, self.list)
-        self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
-        self.list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
+        # self.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColEndDrag, self.list)
+        # self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEdit, self.list)
+        # self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
+        # self.list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
 
         # for wxMSW
-        self.list.Bind(wx.EVT_COMMAND_RIGHT_CLICK, self.OnRightClick)
+        # self.list.Bind(wx.EVT_COMMAND_RIGHT_CLICK, self.OnRightClick)
 
         # for wxGTK
-        self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
+        # self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
         # for sync data
         MenuBar.menus.action.Bind(
             wx.EVT_MENU, self.OnSyncReceives, MenuAction.items.sync_data)
@@ -119,8 +110,8 @@ class WeChatReminderPanel(wx.Panel):
             for idx, val in enumerate(rows):
                 datamap[idx + 1] = tuple(val)
             self.itemDataMap = datamap
-            self.list.ClearAll()
-            wx.CallAfter(self.PopulateList)
+            # self.list.ClearAll()
+            wx.CallAfter(self.list.AddRows, rows)
             timestamp = datetime.now().strftime("%Y-%m-%d %X")
             msg = u'%s数据同步成功 at %s' % (self.Name, timestamp)
             self.SetStatusText(msg)
@@ -163,81 +154,11 @@ class WeChatReminderPanel(wx.Panel):
         dlg = AutoSyncDialog(self, title='title')
         dlg.CenterOnParent()
         dlg.ShowModal()
+
     # ----------------------------------------------------
     def OnUseNative(self, event):
         wx.SystemOptions.SetOptionInt("mac.listctrl.always_use_generic", not event.IsChecked())
         wx.GetApp().GetTopWindow().LoadDemo("ListCtrl")
-
-    def PopulateList(self, heading_only=False):
-        if 0:
-            # for normal, simple columns, you can add them like this:
-            self.list.InsertColumn(0, "Artist")
-            self.list.InsertColumn(1, "Title", wx.LIST_FORMAT_RIGHT)
-            self.list.InsertColumn(2, "Genre")
-        else:
-            headings = self.headings
-            # but since we want images on the column header we have to do it the hard way:
-            info = wx.ListItem()
-            info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-            info.m_image = -1
-            info.m_format = 0
-            info.m_text = headings[0]
-            self.list.InsertColumnInfo(0, info)
-
-            info.m_format = wx.LIST_FORMAT_RIGHT
-            info.m_text = headings[1]
-            self.list.InsertColumnInfo(1, info)
-
-            info.m_format = 0
-            info.m_text = headings[2]
-            self.list.InsertColumnInfo(2, info)
-            info.m_format = 0
-            info.m_text = headings[3]
-            self.list.InsertColumnInfo(3, info)
-            info.m_format = 0
-            info.m_text = headings[4]
-            self.list.InsertColumnInfo(4, info)
-            info.m_format = 0
-            info.m_text = headings[5]
-            self.list.InsertColumnInfo(5, info)
-            info.m_format = 0
-            info.m_text = headings[6]
-            self.list.InsertColumnInfo(6, info)
-        if heading_only:
-            return
-        items = self.itemDataMap.items()
-        for key, data in items:
-            index = self.list.InsertStringItem(sys.maxint, data[0])
-            item = self.list.GetItem(index)
-            for pos, val in enumerate(data[1:]):
-                self.list.SetStringItem(index, pos + 1, val)
-                if data[-1] == u"已关闭":
-                    item.SetTextColour(wx.NamedColour("GRAY"))
-                elif data[-1] == u'待分解':
-                    item.SetTextColour(wx.NamedColour("RED"))
-                    self._restore_frame = True
-                elif data[-1] == u'分解完毕':
-                    item.SetTextColour(wx.NamedColour("BLUE"))
-                    # item.SetFont(item.GetFont().Bold())
-                self.list.SetItem(item)
-            self.list.SetItemData(index, key)
-
-        self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-        self.list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
-        self.list.SetColumnWidth(2, wx.LIST_AUTOSIZE)
-
-        # show how to select an item
-        # self.list.SetItemState(5, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-
-        # show how to change the colour of a couple items
-        # item = self.list.GetItem(1)
-        # item.SetTextColour(wx.BLUE)
-        # self.list.SetItem(item)
-        # item = self.list.GetItem(4)
-        # item.SetTextColour(wx.RED)
-        # self.list.SetItem(item)
-
-        self.currentItem = 0
 
     def OnRightDown(self, event):
         x = event.GetX()
@@ -292,6 +213,7 @@ class WeChatReminderPanel(wx.Panel):
         self.log.WriteText("OnItemDelete\n")
 
     def OnColClick(self, event):
+        self.Layout()
         self.log.WriteText("OnColClick: %d\n" % event.GetColumn())
         event.Skip()
 

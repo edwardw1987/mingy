@@ -34,7 +34,8 @@ class WidgetArray(object):
         return str(self._widgets)
 
     def __getitem__(self, index):
-        return self._widgets[index]
+        w = self._widgets[index]
+        return w.get_instance()
 
     def __iter__(self):
         return iter(self._widgets)
@@ -96,8 +97,7 @@ class Factory(object):
                     for w in val:
                         yield w
 
-    @classmethod
-    def handle_widget(cls, widget, *args, **kwargs):
+    def handle_widget(self, widget, *args, **kwargs):
         factory = widget.get_factory()
         if issubclass(factory, Factory):
             factory.create(widget, *args, **kwargs)
@@ -109,7 +109,7 @@ class MenuBarFactory(Factory):
         menu_bar = cls()
         for menu_widget in cls.iter_widegts():
             menu = menu_widget.create()
-            cls.handle_widget(menu_widget)
+            menu_bar.handle_widget(menu_widget)
             menu_bar.Append(menu, menu_widget.get('text'))
         return menu_bar
 
