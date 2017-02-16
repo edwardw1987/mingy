@@ -14,8 +14,8 @@ class BaseListCtrl(wx.ListCtrl,
     def __init__(self, parent):
         wx.ListCtrl.__init__(self, parent, -1,
                              style=wx.LC_REPORT |
-                                   wx.LC_SORT_DESCENDING |
-                                   wx.LC_ALIGN_LEFT)
+                                   wx.LC_SORT_DESCENDING
+                             )
         ListCtrlAutoWidthMixin.__init__(self)
         ColumnSorterMixin.__init__(self, len(self.headings))
         # show how to select an item
@@ -55,7 +55,7 @@ class BaseListCtrl(wx.ListCtrl,
 class ReceivesListCtrl(Factory, BaseListCtrl):
     headings = WidgetArray(
         Widget(wx.ListItem, text=u'接待时间'),
-        Widget(wx.ListItem, text=u'主题', format=wx.LIST_FORMAT_RIGHT),
+        Widget(wx.ListItem, text=u'主题'),
         Widget(wx.ListItem, text=u'请求来源'),
         Widget(wx.ListItem, text=u'房间'),
         Widget(wx.ListItem, text=u'服务请求人'),
@@ -69,8 +69,8 @@ class ReceivesListCtrl(Factory, BaseListCtrl):
         for w in self.iter_widegts():
             li = w.create()
             li.SetText(w.get('text'))
-            if w.get('format'):
-                li.SetAlign(w.get('format'))
+            # if w.get('format'):
+            #     li.SetAlign(w.get('format'))
             self.InsertColumnItem(w.index, li)
         return self
 

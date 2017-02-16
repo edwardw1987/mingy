@@ -12,6 +12,7 @@ from models import MenuBar, MenuAction, MenuView, MenuSetting
 from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 from util import Factory
 
+
 class ColoredPanel(wx.Window):
     def __init__(self, parent, color):
         wx.Window.__init__(self, parent, -1, style=wx.SIMPLE_BORDER)
@@ -28,46 +29,17 @@ class BasePanel(Factory, wx.Panel):
         self._restore_frame = False
 
 
-
-class WeChatReminderPanel(wx.Panel):
-    def __init__(self, parent, log, name):
-        wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS, name=name)
-        self.log = log
-        self.listbook = parent
-        self._restore_frame = False
-
-        tID = wx.NewId()
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        self.frame = wx.FindWindowById(9999)
+class WeChatReminderPanel(BasePanel):
+    @classmethod
+    def create(cls, parent, log, name):
+        self = cls(parent, log, name)
         self.list = listctrls.ReceivesListCtrl.create(self)
-        li = self.list.headings[0]
-        li.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-        self.list.SetColumn(0, li)
-        sizer.Add(self.list, 1, wx.EXPAND)
-        #
-        # self.list.SortListItems(0, True)
-        #
-        self.SetSizer(sizer)
-        self.SetAutoLayout(True)
+        self._layout()
+        self._bind_event()
+        return self
 
-        # self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
-        # self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self.list)
-        # self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
-        # self.Bind(wx.EVT_LIST_DELETE_ITEM, self.OnItemDelete, self.list)
-        self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick, self.list)
-        # self.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.OnColRightClick, self.list)
-        # self.Bind(wx.EVT_LIST_COL_BEGIN_DRAG, self.OnColBeginDrag, self.list)
+    def _bind_event(self):
         self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
-        # self.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColEndDrag, self.list)
-        # self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEdit, self.list)
-        # self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
-        # self.list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
-
-        # for wxMSW
-        # self.list.Bind(wx.EVT_COMMAND_RIGHT_CLICK, self.OnRightClick)
-
-        # for wxGTK
-        # self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
         # for sync data
         MenuBar.menus.action.Bind(
             wx.EVT_MENU, self.OnSyncReceives, MenuAction.items.sync_data)
@@ -78,7 +50,47 @@ class WeChatReminderPanel(wx.Panel):
         MenuBar.menus.settings.Bind(
             wx.EVT_MENU, self.OnSetAutoSync, MenuSetting.auto_sync.instance)
         # for count event
-        self.list.Bind(EVT_COUNT, self.OnCount)
+        self.Bind(EVT_COUNT, self.OnCount)
+
+    def _layout(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.list, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.SetAutoLayout(True)
+
+    def __init__(self, parent, log, name):
+        wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS, name=name)
+        self.log = log
+        self.listbook = parent
+        self._restore_frame = False
+
+        tID = wx.NewId()
+        self.frame = wx.FindWindowById(9999)
+        # li = self.list.headings[0]
+        # li.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+        # self.list.SetColumn(0, li)
+        # self.list.SortListItems(0, True)
+        #
+
+        # self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
+        # self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self.list)
+        # self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
+        # self.Bind(wx.EVT_LIST_DELETE_ITEM, self.OnItemDelete, self.list)
+        # self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick, self.list)
+        # self.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.OnColRightClick, self.list)
+        # self.Bind(wx.EVT_LIST_COL_BEGIN_DRAG, self.OnColBeginDrag, self.list)
+        # self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
+        # self.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColEndDrag, self.list)
+        # self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEdit, self.list)
+        # self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
+        # self.list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
+
+        # for wxMSW
+        # self.list.Bind(wx.EVT_COMMAND_RIGHT_CLICK, self.OnRightClick)
+
+        # for wxGTK
+        # self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
+
 
     def OnCount(self, e):
         _, s = e.GetValue()
@@ -325,4 +337,3 @@ class AssignTaskPanel(BasePanel):
         sizer.Add(self.list, 1, wx.EXPAND)
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
-
