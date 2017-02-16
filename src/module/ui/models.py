@@ -6,8 +6,10 @@ from util import Widget, WidgetArray, MenuBarFactory, MenuFactory
 class MenuAction(MenuFactory, wx.Menu):
     items = WidgetArray(
         Widget(wx.MenuItem, text=u"同步接单记录\tCtrl+Alt+J", id=-1, name="sync_data"),
+        Widget(wx.MenuItem, text=u"同步问题列表\tCtrl+Alt+K", id=-1, name="sync_pb"),
         Widget(wx.MenuItem, id=wx.ID_SEPARATOR),
         Widget(wx.MenuItem, text=u"自动同步接单记录", id=-1, kind=1, name="auto_sync"),
+        Widget(wx.MenuItem, text=u"自动同步问题列表", id=-1, kind=1, name="auto_sync_pb"),
         Widget(wx.MenuItem, id=wx.ID_SEPARATOR),
         Widget(wx.MenuItem, text=u"退出\tCtrl+Q", id=-1, name="close")
     )
