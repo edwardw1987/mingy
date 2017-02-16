@@ -2,18 +2,20 @@
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
 # @Last Modified by:   wangwh8
-# @Last Modified time: 2017-01-24 10:41:00
+# @Last Modified time: 2017-02-16 16:13:22
 import argparse
 import hashlib
-import os
 import random
-from pprint import pprint
 
 import requests
 from bs4 import BeautifulSoup
-from jinja2 import Environment, FileSystemLoader
 from requests.exceptions import ConnectTimeout
 
+from templates import render_template
+
+# ---------- PROJECT ID ----------
+PROJECT_ID_AILU = '7bbc819c-a561-e411-9927-e41f13c5183a'  # 艾卢
+# ---------- ADDR ----------
 MINGYUAN_OFFICIAL_ADDR = '192.168.0.103'
 MINGYUAN_TEST_ADDR = '192.168.0.123'
 # ---------- URI ----------
@@ -22,17 +24,6 @@ URI_GRID_DATA = '/_grid/griddata.aspx'
 URI_USER_TREE = '/Kfxt/RWGL/Rwcl_Edit_Rwcl_Assign_UserTree.aspx'
 URI_RWCL_EDIT = '/Kfxt/RWGL/Rwcl_Edit.aspx'
 URI_RWCL_WORK = '/Kfxt/Rwgl/Rwcl_Edit_Rwcl_WorkForm.aspx'
-
-
-def render_template(template_name, **context):
-    globals = context.pop('globals', {})
-    jinja_env = Environment(
-        loader=FileSystemLoader(os.path.join(
-            os.path.dirname(__file__), '.')),
-        trim_blocks=True,
-        extensions=["jinja2.ext.do", "jinja2.ext.loopcontrols", ])
-    jinja_env.globals.update(globals)
-    return jinja_env.get_template(template_name).render(context)
 
 
 def handle_args():
@@ -182,24 +173,31 @@ class MinYuanClient(requests.Session):
             print len(users)
         return resp_data
 
-    def getProblemList(self):
+    def getProblemList(self, project_id=PROJECT_ID_AILU, page_num=1, page_size=20):
+        '''
+        获取`交付问题列表`
+        xml="/Kfxt/ZSJF/JFWTCL_GRID.xml" (所有记录)
+        xml="/Kfxt/ZSJF/JFWTCL_GRID_WCL.xml" (未处理)
+        xml="/Kfxt/ZSJF/JFWTCL_GRID_YCL.xml" (已处理)
+        输出列表按 录入日期 `LrDate` 降序排序 `descend`
+        '''
+
         params = dict(
-            xml="/Kfxt/ZSJF/JFWTCL_GRID_WCL_JfRoom.xml",
+            xml="/Kfxt/ZSJF/JFWTCL_GRID.xml",
             gridId="appGrid",
-            sortCol="TsFcInfo",
-            sortDir="ascend",
+            sortCol="LrDate",
+            sortDir="descend",
             vscrollmode="0",
             multiSelect="1",
             selectByCheckBox="0",
-            filter='''<filter type="and"><filter type="and"><condition operator="in" attribute="ProjGUID" value="7bbc819c-a561-e411-9927-e41f13c5183a"/></filter>
-            <filter type="and"/></filter>''',
+            filter=init_filter(project_id),
             processNullFilter="1",
             customFilter="",
             customFilter2="",
             dependencySQLFilter="",
             location="",
-            pageNum="1",
-            pageSize="20",
+            pageNum=page_num,
+            pageSize=page_size,
             showPageCount="1",
             appName="Default",
             application="",
@@ -208,7 +206,6 @@ class MinYuanClient(requests.Session):
         resp_data = self.fetch(URI_GRID_DATA, params=params)
         if self.validate_response(resp_data):
             resp = resp_data.pop("response")
-            # q = Q(resp.content)
             soup = get_soup(resp.text)
             table = soup.find(attrs={"id": "gridBodyTable"})
             if not table:
@@ -409,7 +406,7 @@ class MinYuanClient(requests.Session):
 
 
 def main():
-    args = handle_args()
+    # args = handle_args()
     """
     视图(xml)：
         所有记录 Jdjl_Grid.xml
@@ -421,7 +418,7 @@ def main():
         建议 /Kfxt/RWGL/Jdjl_Grid_Suggest.xml
     """
     mingy = MinYuanClient("shenkai", "aaa111", addr=MINGYUAN_TEST_ADDR)
-    pprint(mingy.getJFTaskList(args.project, args.taskcode))
+    # pprint(mingy.getJFTaskList(args.project, args.taskcode))
     # r1 = mingy.fetch(
     #     '/_grid/griddata.aspx?xml=%2fkfxt%2frwgl%2fRwcl_Grid_JF_JfRoom.xml&funcid=01020504&gridId=appGrid&sortCol=&sortDir=&vscrollmode=0&multiSelect=1&selectByCheckBox=0&filter=%3cfilter+type%3d%22and%22%3e%3cfilter+type%3d%22and%22%3e%3ccondition+operator%3d%22in%22+attribute%3d%22TsProjGUID%22+value%3d%227bbc819c-a561-e411-9927-e41f13c5183a%22+%2f%3e%3c%2ffilter%3e%3cfilter+type%3d%22and%22%3e%3cfilter+type%3d%22or%22%3e%3ccondition+attribute%3d%22taskcode%22+operator%3d%22like%22+datatype%3d%22varchar%22+value%3d%221002%22+%2f%3e%3c%2ffilter%3e%3c%2ffilter%3e%3c%2ffilter%3e&processNullFilter=1&customFilter=&customFilter2=&dependencySQLFilter=&location=&pageNum=1&pageSize=18&showPageCount=1&appName=Default&application=&cp=')
     # r2 = mingy.fetch(
@@ -435,8 +432,8 @@ def main():
     # print init_filter(project_id="7bbc819c-a561-e411-9927-e41f13c5183a",
     #     task_code="1002")
     # print urllib.unquote_plus(s)
-    # problems = mingy.getProblemList()
-    # print len(problems["rows"])
+    problems = mingy.getProblemList()
+    print len(problems["rows"])
     # pbs = problems.get("rows")
     # if pbs:
     #     pid = pbs[0].keys()[0]

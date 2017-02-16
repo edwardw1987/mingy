@@ -55,12 +55,64 @@ class BaseListCtrl(wx.ListCtrl,
 class ReceivesListCtrl(Factory, BaseListCtrl):
     headings = WidgetArray(
         Widget(wx.ListItem, text=u'接待时间'),
-        Widget(wx.ListItem, text=u'主题'),
+        Widget(wx.ListItem, text=u'主题', format=wx.LIST_FORMAT_RIGHT),
         Widget(wx.ListItem, text=u'请求来源'),
         Widget(wx.ListItem, text=u'房间'),
         Widget(wx.ListItem, text=u'服务请求人'),
         Widget(wx.ListItem, text=u'接待人'),
         Widget(wx.ListItem, text=u"分解状态"),
+    )
+
+    @classmethod
+    def create(cls, parent):
+        self = cls(parent)
+        for w in self.iter_widegts():
+            li = w.create()
+            li.SetText(w.get('text'))
+            if w.get('format'):
+                li.SetAlign(w.get('format'))
+            self.InsertColumnItem(w.index, li)
+        return self
+
+    def AddRows(self, data_list):
+        # self.DeleteAllColumns()
+        self.DeleteAllItems()
+        # self.ClearAll()
+
+        for row_num, row_data in enumerate(data_list):
+            pos = self.InsertImageStringItem(row_num, row_data[0], self.idx1)
+            # add values in the other columns on the same row
+            for idx, val in enumerate(row_data[1:self.GetColumnCount()]):
+                self.SetStringItem(pos, idx + 1, val)
+                self.SetItemData(pos, row_num + 1)
+            listitem = self.GetItem(pos)
+
+            if row_data[-1] == u'已关闭':
+                listitem.SetTextColour(wx.NamedColour("GRAY"))
+            elif row_data[-1] == u'待分解':
+                listitem.SetTextColour(wx.NamedColour("RED"))
+                # listitem.SetFont(listitem.GetFont().Bold())
+            elif row_data[-1] == u'分解完毕':
+                listitem.SetTextColour(wx.NamedColour("BLUE"))
+            self.SetItem(listitem)
+            #
+        self.SetItemDataMap(data_list)
+        self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+        self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+        self.SetColumnWidth(2, 100)
+
+        return
+
+
+class TaskAssignListCtrl(Factory, BaseListCtrl):
+    headings = WidgetArray(
+        Widget(wx.ListItem, text=u'状态'),
+        Widget(wx.ListItem, text=u'房产'),
+        Widget(wx.ListItem, text=u'部位'),
+        Widget(wx.ListItem, text=u'问题分类'),
+        Widget(wx.ListItem, text=u'问题描述'),
+        Widget(wx.ListItem, text=u'录入时间'),
+        Widget(wx.ListItem, text=u'任务编号'),
     )
 
     @classmethod

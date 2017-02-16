@@ -5,12 +5,12 @@ from datetime import datetime
 import wx
 
 import listctrls
-from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
 from context import modal_ctx
 from dialogs import AutoSyncDialog
 from event import CountingThread, EVT_COUNT
 from models import MenuBar, MenuAction, MenuView, MenuSetting
-
+from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
+from util import Factory
 
 class ColoredPanel(wx.Window):
     def __init__(self, parent, color):
@@ -18,6 +18,15 @@ class ColoredPanel(wx.Window):
         self.SetBackgroundColour(color)
         if wx.Platform == '__WXGTK__':
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+
+
+class BasePanel(Factory, wx.Panel):
+    def __init__(self, parent, log, name):
+        wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS, name=name)
+        self.log = log
+        self.listbook = parent
+        self._restore_frame = False
+
 
 
 class WeChatReminderPanel(wx.Panel):
@@ -301,3 +310,19 @@ class WeChatReminderPanel(wx.Panel):
 
     def OnPopupSix(self, event):
         self.list.EditLabel(self.currentItem)
+
+
+class AssignTaskPanel(BasePanel):
+    @classmethod
+    def create(cls, parent, log, name):
+        self = cls(parent, log, name)
+        self.list = listctrls.TaskAssignListCtrl.create(self)
+        self._layout()
+        return self
+
+    def _layout(self):
+        sizer = wx.BoxSizer()
+        sizer.Add(self.list, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.SetAutoLayout(True)
+

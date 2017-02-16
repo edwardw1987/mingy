@@ -33,6 +33,11 @@ class TestLB(wx.Listbook):
                 win = self.makeColorPanel(
                     colour,
                     panel=panels.WeChatReminderPanel(self, self.frame.log, sidebar_list[0]))
+            elif imID == 1:
+                win = self.makeColorPanel(
+                    colour,
+                    panel=panels.AssignTaskPanel.create(self, self.frame.log, sidebar_list[1])
+                )
             else:
                 win = self.makeColorPanel(colour)
             self.AddPage(win, colour, imageId=imID)
