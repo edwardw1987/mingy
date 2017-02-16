@@ -22,7 +22,7 @@ class ColoredPanel(wx.Window):
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
 
 
-class WeChatReminderPanel(wx.Panel, ColumnSorterMixin):
+class WeChatReminderPanel(wx.Panel):
     headings = [
         u"分解状态",
         u"接待时间",
@@ -47,11 +47,7 @@ class WeChatReminderPanel(wx.Panel, ColumnSorterMixin):
 
         self.PopulateList(heading_only=True)
 
-        # Now that the list exists we can init the other base class,
-        # see wx/lib/mixins/listctrl.py
-        # self.itemDataMap = musicdata
-        ColumnSorterMixin.__init__(self, len(self.headings))
-        # self.SortListItems(0, True)
+        # self.list.SortListItems(0, True)
 
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
