@@ -1,17 +1,15 @@
 # coding:utf-8
-import sys
+
+from datetime import datetime
 
 import wx
-from wx.lib.mixins.listctrl import ColumnSorterMixin
 
-import images
 import listctrls
-from models import MenuBar, MenuAction, MenuView, MenuSetting
-from context import modal_ctx
-from event import CountingThread, EVT_COUNT
 from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
-from datetime import datetime
+from context import modal_ctx
 from dialogs import AutoSyncDialog
+from event import CountingThread, EVT_COUNT
+from models import MenuBar, MenuAction, MenuView, MenuSetting
 
 
 class ColoredPanel(wx.Window):
