@@ -50,14 +50,20 @@ def get_soup(html):
 
 
 class MinYuanClient(requests.Session):
-    default_usr = "wubin1"
-    default_pwd = "aaa111"
+    test_usr = "shenkai"
+    test_pwd = "aaa111"
+    official_usr = "shenkai"
+    official_pwd = "aaa222"
 
     def __init__(self, username=None, password=None, addr=MINGYUAN_OFFICIAL_ADDR):
         super(MinYuanClient, self).__init__()
         if username is None and password is None:
-            username = self.default_usr
-            password = self.default_pwd
+            if addr == MINGYUAN_TEST_ADDR:
+                username = self.test_usr
+                password = self.test_pwd
+            else:
+                username = self.official_usr
+                password = self.official_pwd
         self.addr = addr
         self.login(username, password)
 
@@ -181,7 +187,6 @@ class MinYuanClient(requests.Session):
         xml="/Kfxt/ZSJF/JFWTCL_GRID_YCL.xml" (已处理)
         输出列表按 录入日期 `LrDate` 降序排序 `descend`
         '''
-
         params = dict(
             xml="/Kfxt/ZSJF/JFWTCL_GRID.xml",
             gridId="appGrid",
@@ -214,7 +219,11 @@ class MinYuanClient(requests.Session):
             for tr in table.find_all(attrs={"otype": "1"}):
                 ProblemGUID = tr.attrs["ProblemGUID".lower()]
                 r = [td.getText() for td in tr.find_all(name="td")]
-                rows.append({ProblemGUID: tuple(r)})
+                vals = []
+                for idx, val in enumerate(r):
+                    if idx in {2, 3, 4, 5, 6, 9, 13}:
+                        vals.append(val)
+                rows.append({ProblemGUID: tuple(vals)})
             resp_data["rows"] = rows
         return resp_data
 

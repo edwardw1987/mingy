@@ -3,11 +3,16 @@
 All util functions for quick building of UI components
 '''
 import re
+import wx
 
 
 def get_func_doc_args(fn):
     pattern = re.compile('(\w+)=\w+')
-    return set(pattern.findall(fn.__doc__))
+    if fn.__doc__:
+        return set(pattern.findall(fn.__doc__))
+
+
+WIDGET_NAME = 'widget_name'
 
 
 class WidgetArray(object):
@@ -17,14 +22,11 @@ class WidgetArray(object):
     def _handle(self, widgets):
         for idx, widget in enumerate(widgets):
             widget.index = idx
-            if widget.get('name'):
-                widget.set('name',
-                           widget.get('name').replace(' ', '_').lower())
         return widgets
 
-    def __getattr__(self, name):
+    def __getattr__(self, widget_name):
         for w in self._widgets:
-            if w.get('name') == name:
+            if w.get_name() == widget_name:
                 return w.get_instance()
 
     def __len__(self):
@@ -50,8 +52,15 @@ class Widget(object):
         self._attr = {}
         self.handle_args(kwargs)
 
+        if self.get_name():
+            self.set(WIDGET_NAME,
+                     self.get_name().replace(' ', '_').lower())
+
     def get(self, attr_name):
         return self._attr.get(attr_name)
+
+    def get_name(self):
+        return self.get(WIDGET_NAME)
 
     def set(self, attr_name, value):
         self._attr[attr_name] = value
@@ -67,11 +76,16 @@ class Widget(object):
         return self._factory
 
     def create(self):
-        self._instance = self._factory(**self._init_args)
+        if issubclass(self._factory, Factory):
+            self._instance = self._factory.create()
+        else:
+            self._instance = self._factory(**self._init_args)
         return self._instance
 
     def handle_args(self, args):
         _init_args = get_func_doc_args(self._factory.__init__)
+        if _init_args is None:
+            return
         for k, v in args.items():
             if k in _init_args:
                 self._init_args[k] = v
@@ -97,36 +111,27 @@ class Factory(object):
                     for w in val:
                         yield w
 
-    def handle_widget(self, widget, *args, **kwargs):
-        factory = widget.get_factory()
-        if issubclass(factory, Factory):
-            factory.create(widget, *args, **kwargs)
+    @classmethod
+    def get_widget(cls, widget_name):
+        for w in cls.iter_widegts():
+            if w.get_name() == widget_name:
+                return w
 
 
-class MenuBarFactory(Factory):
+class MenuBarFactory(Factory, wx.MenuBar):
     @classmethod
     def create(cls):
         menu_bar = cls()
         for menu_widget in cls.iter_widegts():
             menu = menu_widget.create()
-            menu_bar.handle_widget(menu_widget)
             menu_bar.Append(menu, menu_widget.get('text'))
         return menu_bar
 
 
-class MenuFactory(Factory):
+class MenuFactory(Factory, wx.Menu):
     @classmethod
-    def create(cls, menu_widget):
+    def create(cls):
+        self = cls()
         for mi_widget in cls.iter_widegts():
-            menu_widget.instance.AppendItem(mi_widget.create())
-
-
-if __name__ == '__main__':
-    import wx
-
-    arr = WidgetArray(Widget(wx.ListItem))
-    # for i in arr:
-    #     print i
-    # print arr[0]
-    # arr.push(88)
-    print arr.a
+            self.AppendItem(mi_widget.create())
+        return self

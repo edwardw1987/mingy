@@ -33,6 +33,7 @@ class BaseListCtrl(wx.ListCtrl,
         self.sm_up = self.il.Add(images.SmallUpArrow.GetBitmap())
         self.sm_dn = self.il.Add(images.SmallDnArrow.GetBitmap())
         self.SetImageList(self.il, wx.IMAGE_LIST_SMALL)
+        self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging)
 
     # Used by the ColumnSorterMixin, see wx/lib/mixins/listctrl.py
     def GetListCtrl(self):
@@ -51,6 +52,12 @@ class BaseListCtrl(wx.ListCtrl,
             datamap[idx + 1] = tuple(val)
         self.itemDataMap = datamap
 
+    def OnColDragging(self, event):
+        pass
+
+    def getColumnText(self, index, col):
+        item = self.GetItem(index, col)
+        return item.GetText()
 
 class ReceivesListCtrl(Factory, BaseListCtrl):
     headings = WidgetArray(
@@ -106,13 +113,13 @@ class ReceivesListCtrl(Factory, BaseListCtrl):
 
 class TaskAssignListCtrl(Factory, BaseListCtrl):
     headings = WidgetArray(
-        Widget(wx.ListItem, text=u'状态'),
-        Widget(wx.ListItem, text=u'房产'),
-        Widget(wx.ListItem, text=u'部位'),
-        Widget(wx.ListItem, text=u'问题分类'),
-        Widget(wx.ListItem, text=u'问题描述'),
-        Widget(wx.ListItem, text=u'录入时间'),
-        Widget(wx.ListItem, text=u'任务编号'),
+        Widget(wx.ListItem, text=u'状态'),  # 2
+        Widget(wx.ListItem, text=u'房产'),  # 3
+        Widget(wx.ListItem, text=u'部位'),  # 4
+        Widget(wx.ListItem, text=u'问题分类'),  # 5
+        Widget(wx.ListItem, text=u'问题描述'),  # 6
+        Widget(wx.ListItem, text=u'录入时间'),  # 9
+        Widget(wx.ListItem, text=u'任务编号'),  # 13
     )
 
     @classmethod
@@ -128,6 +135,11 @@ class TaskAssignListCtrl(Factory, BaseListCtrl):
         # self.DeleteAllColumns()
         self.DeleteAllItems()
         # self.ClearAll()
+        # for i in range(10):
+        #     print ' >> '.join(data_list[i].values()[0])
+        # return
+        if isinstance(data_list[0], dict):
+            data_list = [i.values()[0] for i in data_list]
 
         for row_num, row_data in enumerate(data_list):
             pos = self.InsertImageStringItem(row_num, row_data[0], self.idx1)
@@ -137,13 +149,15 @@ class TaskAssignListCtrl(Factory, BaseListCtrl):
                 self.SetItemData(pos, row_num + 1)
             listitem = self.GetItem(pos)
 
-            if row_data[-1] == u'已关闭':
-                listitem.SetTextColour(wx.NamedColour("GRAY"))
-            elif row_data[-1] == u'待分解':
+            if row_data[0] == u'未处理':
                 listitem.SetTextColour(wx.NamedColour("RED"))
-                # listitem.SetFont(listitem.GetFont().Bold())
-            elif row_data[-1] == u'分解完毕':
+            elif row_data[0] == u'已转任务':
                 listitem.SetTextColour(wx.NamedColour("BLUE"))
+                # listitem.SetFont(listitem.GetFont().Bold())
+            elif row_data[0] == u'实施中':
+                listitem.SetTextColour(wx.NamedColour("GREEN"))
+            elif row_data[0] == u'已关闭':
+                listitem.SetTextColour(wx.NamedColour('GRAY'))
             self.SetItem(listitem)
             #
         self.SetItemDataMap(data_list)

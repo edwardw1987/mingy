@@ -5,12 +5,12 @@ from datetime import datetime
 import wx
 
 import listctrls
+from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR, MINGYUAN_TEST_ADDR
 from context import modal_ctx
 from dialogs import AutoSyncDialog
 from event import CountingThread, EVT_COUNT
-from models import MenuBar, MenuAction, MenuView, MenuSetting
-from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR
-from util import Factory
+from menus import MenuBar, MenuAction, MenuView, MenuSetting, MenuTaskAssign
+from util import Widget
 
 
 class ColoredPanel(wx.Window):
@@ -21,104 +21,135 @@ class ColoredPanel(wx.Window):
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
 
 
-class BasePanel(Factory, wx.Panel):
+class BasePanel(wx.Panel):
     def __init__(self, parent, log, name):
         wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS, name=name)
         self.log = log
-        self.listbook = parent
+        self.parent = parent
         self._restore_frame = False
-
-
-class WeChatReminderPanel(BasePanel):
-    @classmethod
-    def create(cls, parent, log, name):
-        self = cls(parent, log, name)
-        self.list = listctrls.ReceivesListCtrl.create(self)
-        self._layout()
-        self._bind_event()
-        return self
-
-    def _bind_event(self):
-        self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
-        # for sync data
-        MenuBar.menus.action.Bind(
-            wx.EVT_MENU, self.OnSyncReceives, MenuAction.items.sync_data)
-        # for auto-sync data
-        MenuBar.menus.action.Bind(
-            wx.EVT_MENU, self.OnToggleAutoSync, MenuAction.items.auto_sync)
-        # for set auto sync
+        self.frame = wx.FindWindowById(9999)
+        # for set auto sync duration
         MenuBar.menus.settings.Bind(
             wx.EVT_MENU, self.OnSetAutoSync, MenuSetting.auto_sync.instance)
-        # for count event
         self.Bind(EVT_COUNT, self.OnCount)
-
-    def _layout(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.list, 1, wx.EXPAND)
-        self.SetSizer(sizer)
-        self.SetAutoLayout(True)
-
-    def __init__(self, parent, log, name):
-        wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS, name=name)
-        self.log = log
-        self.listbook = parent
-        self._restore_frame = False
-
-        tID = wx.NewId()
-        self.frame = wx.FindWindowById(9999)
-        # li = self.list.headings[0]
-        # li.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-        # self.list.SetColumn(0, li)
-        # self.list.SortListItems(0, True)
-        #
-
-        # self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
-        # self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self.list)
-        # self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
-        # self.Bind(wx.EVT_LIST_DELETE_ITEM, self.OnItemDelete, self.list)
-        # self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick, self.list)
-        # self.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.OnColRightClick, self.list)
-        # self.Bind(wx.EVT_LIST_COL_BEGIN_DRAG, self.OnColBeginDrag, self.list)
-        # self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
-        # self.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColEndDrag, self.list)
-        # self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEdit, self.list)
-        # self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
-        # self.list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
-
-        # for wxMSW
-        # self.list.Bind(wx.EVT_COMMAND_RIGHT_CLICK, self.OnRightClick)
-
-        # for wxGTK
-        # self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
-
-
-    def OnCount(self, e):
-        _, s = e.GetValue()
-        if s % 15 == 0:
-            e.auto = True
-            # self.frame.start_thread(self.OnSyncData, e)
-            self.OnSyncReceives(e)
 
     def SetStatusText(self, text):
         status_bar = wx.FindWindowById(9999).GetStatusBar()
         status_bar.SetStatusText(text)
 
-    def _handle_restore_frame(self, event):
+    def OnSetAutoSync(self, e):
+        dlg = AutoSyncDialog(self, title='title')
+        dlg.CenterOnParent()
+        dlg.ShowModal()
+
+    def handle_restore_frame(self, event):
         # 弹窗提醒用户有待分解的记录
         if not self._restore_frame:
             return
         if getattr(event, 'auto', False):
             if self.frame.IsIconized():
                 self.frame.Restore()
+                self._restore_frame = False
 
             m = MenuView.stay_on_top.instance
             if not m.IsChecked():
                 m.Check()
                 self.frame.SetWindowStyle(self.frame.GetWindowStyle() | wx.STAY_ON_TOP)
 
-    def _do_sync_receives(self, event):
+    def OnSyncData(self, event):
+        # 新建一个子线程，用来同步接单记录，可以避免界面阻塞卡死
+        thd = self.frame.push_thread(self.run_sync, event)
+        _sync_thread = getattr(self, '_sync_thread', None)
+        # 如果旧线程isAlive则返回, 否则stop, delete旧线程
+        if _sync_thread:
+            if _sync_thread.isAlive():
+                return
+            self.frame.delete_thread(_sync_thread)
+        self._sync_thread = thd
+        thd.start()
+
+    def run_sync(self, event):
+        raise NotImplementedError()
+
+    def OnToggleAutoSync(self, e):
+        if e.IsChecked():
+            thd = CountingThread(self, (1, 1))
+            self._counting_thread = thd
+            self.frame.push_thread(thd)
+            thd.start()
+        else:
+            if not self._counting_thread.stopped():
+                self._counting_thread.stop()
+
+    def OnCount(self, e):
+        _, s = e.GetValue()
+        if s % 15 == 0:
+            e.auto = True
+            # self.frame.start_thread(self.OnSyncData, e)
+            self.OnSyncData(e)
+
+
+class WeChatReminderPanel(BasePanel):
+    listctrl = Widget(listctrls.ReceivesListCtrl)
+
+    def __init__(self, parent, log, name):
+        super(WeChatReminderPanel, self).__init__(parent, log, name)
+        self.list = self.listctrl.get_factory().create(self)
+        self.do_layouts()
+        self.do_binds()
+
+    def do_binds(self):
+        self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
+        # for sync data
+        MenuBar.menus.action.Bind(
+            wx.EVT_MENU, self.OnSyncData, MenuAction.items.sync_data)
+        # for auto-sync data
+        MenuBar.menus.action.Bind(
+            wx.EVT_MENU, self.OnToggleAutoSync, MenuAction.items.auto_sync)
+        # for count event
+        self.Bind(EVT_COUNT, self.OnCount)
+
+    def do_layouts(self):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.list, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+        self.SetAutoLayout(True)
+
+    # def __init__(self, parent, log, name):
+    #     wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS, name=name)
+    #     self.log = log
+    #     self.listbook = parent
+    #     self._restore_frame = False
+    #
+    #     tID = wx.NewId()
+    #     self.frame = wx.FindWindowById(9999)
+    #     # li = self.list.headings[0]
+    #     # li.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+    #     # self.list.SetColumn(0, li)
+    #     # self.list.SortListItems(0, True)
+    #     #
+    #
+    #     # self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
+    #     # self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemDeselected, self.list)
+    #     # self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated, self.list)
+    #     # self.Bind(wx.EVT_LIST_DELETE_ITEM, self.OnItemDelete, self.list)
+    #     # self.Bind(wx.EVT_LIST_COL_CLICK, self.OnColClick, self.list)
+    #     # self.Bind(wx.EVT_LIST_COL_RIGHT_CLICK, self.OnColRightClick, self.list)
+    #     # self.Bind(wx.EVT_LIST_COL_BEGIN_DRAG, self.OnColBeginDrag, self.list)
+    #     # self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
+    #     # self.Bind(wx.EVT_LIST_COL_END_DRAG, self.OnColEndDrag, self.list)
+    #     # self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginEdit, self.list)
+    #     # self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
+    #     # self.list.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
+    #
+    #     # for wxMSW
+    #     # self.list.Bind(wx.EVT_COMMAND_RIGHT_CLICK, self.OnRightClick)
+    #
+    #     # for wxGTK
+    #     # self.list.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
+
+    def run_sync(self, event):
         '同步接单记录过程'
-        self.listbook.SetSelection(0)
         self.frame.Refresh()
         self.SetStatusText(u"正在同步数据......")
         my = MinYuanClient(addr=MINGYUAN_OFFICIAL_ADDR)
@@ -132,10 +163,10 @@ class WeChatReminderPanel(BasePanel):
             # self.list.ClearAll()
             wx.CallAfter(self.list.AddRows, rows)
             timestamp = datetime.now().strftime("%Y-%m-%d %X")
-            msg = u'%s数据同步成功 at %s' % (self.Name, timestamp)
+            msg = u'%s数据同步成功 at %s\n' % (self.Name, timestamp)
             self.SetStatusText(msg)
             wx.CallAfter(self.log.WriteText, msg)
-            self._handle_restore_frame(event)
+            self.handle_restore_frame(event)
         else:
             self.SetStatusText('')
             dlg = wx.MessageDialog(self,
@@ -146,33 +177,6 @@ class WeChatReminderPanel(BasePanel):
                 with modal_ctx as dlg:
                     dlg.ShowModal()
                     dlg.Destroy()
-
-    def OnSyncReceives(self, event):
-        # 新建一个子线程，用来同步接单记录，可以避免界面阻塞卡死
-        thd = self.frame.push_thread(self._do_sync_receives, event)
-        _sync_thread = getattr(self, '_sync_thread', None)
-        # 如果旧线程isAlive则返回, 否则stop, delete旧线程
-        if _sync_thread:
-            if _sync_thread.isAlive():
-                return
-            self.frame.delete_thread(_sync_thread)
-        self._sync_thread = thd
-        thd.start()
-
-    def OnToggleAutoSync(self, e):
-        if e.IsChecked():
-            thd = CountingThread(self.list, (1, 1))
-            self._counting_thread = thd
-            self.frame.push_thread(thd)
-            thd.start()
-        else:
-            if not self._counting_thread.stopped():
-                self._counting_thread.stop()
-
-    def OnSetAutoSync(self, e):
-        dlg = AutoSyncDialog(self, title='title')
-        dlg.CenterOnParent()
-        dlg.ShowModal()
 
     # ----------------------------------------------------
     def OnUseNative(self, event):
@@ -324,16 +328,84 @@ class WeChatReminderPanel(BasePanel):
         self.list.EditLabel(self.currentItem)
 
 
-class AssignTaskPanel(BasePanel):
-    @classmethod
-    def create(cls, parent, log, name):
-        self = cls(parent, log, name)
-        self.list = listctrls.TaskAssignListCtrl.create(self)
-        self._layout()
-        return self
+class TaskAssignPanel(BasePanel):
+    listctrl = Widget(listctrls.TaskAssignListCtrl)
 
-    def _layout(self):
+    def __init__(self, parent, log, name):
+        super(TaskAssignPanel, self).__init__(parent, log, name)
+        self.list = self.listctrl.get_factory().create(self)
+        self.do_layouts()
+        self.do_binds()
+
+    def do_layouts(self):
         sizer = wx.BoxSizer()
         sizer.Add(self.list, 1, wx.EXPAND)
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
+
+    def do_binds(self):
+        # self.Bind(wx.EVT_LIST_COL_DRAGGING, self.OnColDragging, self.list)
+        # for sync data
+        MenuBar.menus.action.Bind(
+            wx.EVT_MENU, self.OnSyncData, MenuAction.items.sync_pb)
+        # for auto-sync data
+        MenuBar.menus.action.Bind(
+            wx.EVT_MENU, self.OnToggleAutoSync, MenuAction.items.auto_sync_pb)
+        self.list.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
+        self.list.Bind(wx.EVT_COMMAND_RIGHT_CLICK, self.OnRightClick)
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.list)
+
+    def run_sync(self, event):
+        '同步问题列表过程'
+        self.frame.Refresh()
+        self.SetStatusText(u"正在同步数据......")
+        my = MinYuanClient(addr=MINGYUAN_TEST_ADDR)
+        data = my.getProblemList(page_size=30)
+        if data.get("rows"):
+            rows = data["rows"]
+            datamap = {}
+            for idx, val in enumerate(rows):
+                datamap[idx + 1] = tuple(val)
+            self.itemDataMap = datamap
+            # self.list.ClearAll()
+            wx.CallAfter(self.list.AddRows, rows)
+            timestamp = datetime.now().strftime("%Y-%m-%d %X")
+            msg = u'%s数据同步成功 at %s\n' % (self.Name, timestamp)
+            self.SetStatusText(msg)
+            wx.CallAfter(self.log.WriteText, msg)
+            self.handle_restore_frame(event)
+        else:
+            self.SetStatusText('')
+            dlg = wx.MessageDialog(self,
+                                   u"请确认网络正常并且VPN已开启",
+                                   u"连接错误",
+                                   wx.OK | wx.ICON_ERROR)
+            if modal_ctx.set_modal(dlg):
+                with modal_ctx as dlg:
+                    dlg.ShowModal()
+                    dlg.Destroy()
+
+    def OnDoubleClick(self, event):
+        self.OnSyncData(event)
+
+    def OnRightClick(self, event):
+        def OnCopyTaskCode(e):
+            self.SetStatusText('')
+            if not self._taskcode:
+                return
+            dataObj = wx.TextDataObject()
+            dataObj.SetText(self._taskcode)
+            if wx.TheClipboard.Open():
+                wx.TheClipboard.SetData(dataObj)
+                wx.TheClipboard.Close()
+                msg = "任务编号 %s 复制成功\n" % self._taskcode
+                self.SetStatusText(msg)
+                self.log.WriteText(msg)
+
+        menu = MenuTaskAssign.create()
+        menu.Bind(wx.EVT_MENU, OnCopyTaskCode, menu.items.copy_taskcode)
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+    def OnItemSelected(self, event):
+        self._taskcode = self.list.getColumnText(event.GetIndex(), 6)

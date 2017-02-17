@@ -1,7 +1,7 @@
 # coding:utf-8
 import wx
 import sys
-from models import MenuBar, MenuView, MenuAction
+from menus import MenuBar, MenuView, MenuAction
 from os import path
 from listbook import TestLB
 from event import StoppableThread
