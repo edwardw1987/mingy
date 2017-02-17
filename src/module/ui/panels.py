@@ -363,9 +363,13 @@ class TaskAssignPanel(BasePanel):
         data = my.getProblemList(page_size=30)
         if data.get("rows"):
             rows = data["rows"]
+            # datamap = {}
+            # for idx, val in enumerate(rows):
+            #     datamap[idx + 1] = tuple(val)
             datamap = {}
-            for idx, val in enumerate(rows):
-                datamap[idx + 1] = tuple(val)
+            for idx, d in enumerate(rows):
+                for k, v in d.items():
+                    datamap[idx + 1] = k
             self.itemDataMap = datamap
             # self.list.ClearAll()
             wx.CallAfter(self.list.AddRows, rows)
@@ -392,13 +396,14 @@ class TaskAssignPanel(BasePanel):
         def OnCopyTaskCode(e):
             self.SetStatusText('')
             if not self._taskcode:
+                self.SetStatusText(u'任务编号复制失败')
                 return
             dataObj = wx.TextDataObject()
             dataObj.SetText(self._taskcode)
             if wx.TheClipboard.Open():
                 wx.TheClipboard.SetData(dataObj)
                 wx.TheClipboard.Close()
-                msg = "任务编号 %s 复制成功\n" % self._taskcode
+                msg = u"任务编号 %s 复制成功\n" % self._taskcode
                 self.SetStatusText(msg)
                 self.log.WriteText(msg)
 
@@ -407,5 +412,11 @@ class TaskAssignPanel(BasePanel):
         self.PopupMenu(menu)
         menu.Destroy()
 
+    def get_problem_id(self, event):
+        item = event.GetItem()
+        data_key = self.list.GetItemData(item.GetId())
+        return self.itemDataMap[data_key]
+
     def OnItemSelected(self, event):
+        print self.get_problem_id(event)
         self._taskcode = self.list.getColumnText(event.GetIndex(), 6)

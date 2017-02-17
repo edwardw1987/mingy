@@ -14,7 +14,13 @@ from requests.exceptions import ConnectTimeout
 from templates import render_template
 
 # ---------- PROJECT ID ----------
-PROJECT_ID_AILU = '7bbc819c-a561-e411-9927-e41f13c5183a'  # 艾卢
+PROJECT_IDS = {
+    'default': '7bbc819c-a561-e411-9927-e41f13c5183a',  # 艾卢
+}
+# ---------- WORKER ID ----------
+WORKER_IDS = {
+    'default': 'b23e6df4-e2f7-e411-891a-e41f13c5183a',  # 曹伟忠
+}
 # ---------- ADDR ----------
 MINGYUAN_OFFICIAL_ADDR = '192.168.0.103'
 MINGYUAN_TEST_ADDR = '192.168.0.123'
@@ -179,7 +185,7 @@ class MinYuanClient(requests.Session):
             print len(users)
         return resp_data
 
-    def getProblemList(self, project_id=PROJECT_ID_AILU, page_num=1, page_size=20):
+    def getProblemList(self, project_id=PROJECT_IDS["default"], page_num=1, page_size=20):
         '''
         获取`交付问题列表`
         xml="/Kfxt/ZSJF/JFWTCL_GRID.xml" (所有记录)
@@ -227,9 +233,7 @@ class MinYuanClient(requests.Session):
             resp_data["rows"] = rows
         return resp_data
 
-    def _preTransferTask(self, problemGUID, workerGUID=None):
-        if workerGUID is None:
-            workerGUID = 'b23e6df4-e2f7-e411-891a-e41f13c5183a'  # 曹伟忠
+    def _preTransferTask(self, problemGUID, workerGUID):
         # ----------交付任务处理----------
         params = dict(
             mode=1,
@@ -295,7 +299,7 @@ class MinYuanClient(requests.Session):
             ))
         return resp_data
 
-    def transferTask(self, problemGUID, workerGUID=None):
+    def transferTask(self, problemGUID, workerGUID=WORKER_IDS["default"]):
         """
         return: {'taskguid':xx}
         """

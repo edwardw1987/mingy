@@ -85,7 +85,6 @@ class ReceivesListCtrl(Factory, BaseListCtrl):
         # self.DeleteAllColumns()
         self.DeleteAllItems()
         # self.ClearAll()
-
         for row_num, row_data in enumerate(data_list):
             pos = self.InsertImageStringItem(row_num, row_data[0], self.idx1)
             # add values in the other columns on the same row
