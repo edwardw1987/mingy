@@ -407,8 +407,20 @@ class TaskAssignPanel(BasePanel):
                 self.SetStatusText(msg)
                 self.log.WriteText(msg)
 
+        def OnCopyProblemGUID(event):
+            self.SetStatusText('')
+            dataObj = wx.TextDataObject()
+            dataObj.SetText(str(self._problem_guid))
+            if wx.TheClipboard.Open():
+                wx.TheClipboard.SetData(dataObj)
+                wx.TheClipboard.Close()
+                msg = u"Problem GUID %s 复制成功\n" % self._problem_guid
+                self.SetStatusText(msg)
+                self.log.WriteText(msg)
+
         menu = MenuTaskAssign.create()
         menu.Bind(wx.EVT_MENU, OnCopyTaskCode, menu.items.copy_taskcode)
+        menu.Bind(wx.EVT_MENU, OnCopyProblemGUID, menu.items.copy_problem_guid)
         self.PopupMenu(menu)
         menu.Destroy()
 
@@ -418,5 +430,5 @@ class TaskAssignPanel(BasePanel):
         return self.itemDataMap[data_key]
 
     def OnItemSelected(self, event):
-        print self.get_problem_id(event)
+        self._problem_guid = self.get_problem_id(event)
         self._taskcode = self.list.getColumnText(event.GetIndex(), 6)

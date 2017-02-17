@@ -252,7 +252,6 @@ class MinYuanClient(requests.Session):
         resp_data = self.fetch(URI_RWCL_EDIT, params=params, data=data)
         if self.validate_response(resp_data):
             resp = resp_data.pop("response")
-            # q = Q(resp.content)
             soup = get_soup(resp.text)
             # ---------- Prepare Params for Transfering Task ----------
             for key in {
@@ -311,7 +310,7 @@ class MinYuanClient(requests.Session):
             tasksource="2",
             taskguid="",
             receiveguid="",
-            WorkerGUIDStr="b23e6df4-e2f7-e411-891a-e41f13c5183a",
+            WorkerGUIDStr=workerGUID,
             funcid="01020502",
         )
         resp_data = self.postUrl(URI_RWCL_EDIT, params=params, data=data)
@@ -323,7 +322,7 @@ class MinYuanClient(requests.Session):
             resp_data["taskguid"] = e.attrs["value"]
         return resp_data
 
-    def _createWorkSheet(self, taskguid):
+    def _createWorkSheet(self, taskguid, problemGUID):
         params = dict(
             mode="1",
             type="touch",
@@ -364,8 +363,8 @@ class MinYuanClient(requests.Session):
             ))
         return resp_data
 
-    def assignTask(self, taskguid):
-        data = self._createWorkSheet(taskguid)
+    def assignTask(self, taskguid, problemguid):
+        data = self._createWorkSheet(taskguid, problemguid)
         params = dict(
             mode="1",
             type="touch",
@@ -373,7 +372,8 @@ class MinYuanClient(requests.Session):
             workguid="",
             funcid="01020504",
         )
-        self.postUrl(URI_RWCL_WORK, params=params, data=data)
+        resp = self.postUrl(URI_RWCL_WORK, params=params, data=data)
+        return resp
 
     def getJFTaskList(self, project_id, task_code=None, page_num=1, page_size=20):
         """
@@ -417,6 +417,10 @@ class MinYuanClient(requests.Session):
             resp_data = ret
         return resp_data
 
+    def run_assign_task(self, problemGUID):
+        data = self.transferTask(problemGUID)
+        self.assignTask(data["taskguid"], problemGUID)
+
 
 def main():
     # args = handle_args()
@@ -445,8 +449,8 @@ def main():
     # print init_filter(project_id="7bbc819c-a561-e411-9927-e41f13c5183a",
     #     task_code="1002")
     # print urllib.unquote_plus(s)
-    problems = mingy.getProblemList()
-    print len(problems["rows"])
+    # problems = mingy.getProblemList()
+    # print len(problems["rows"])
     # pbs = problems.get("rows")
     # if pbs:
     #     pid = pbs[0].keys()[0]
@@ -459,6 +463,8 @@ def main():
     # mingy.getUsers()
     # for i in my.getReceiveList()["receiveList"]:
     #     print ' '.join(i).encode('utf-8')
+    resp = mingy.run_assign_task('261b3db9-21d7-4aa4-876f-ad7fdeca4d51')
+    print resp.text
 
 
 if __name__ == '__main__':
