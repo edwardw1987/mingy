@@ -26,6 +26,11 @@ class MenuView(MenuFactory):
 class MenuTaskAssign(MenuFactory):
     items = WidgetArray(
         Widget(wx.MenuItem, id=-1, text=u"复制任务编号", widget_name="copy_taskcode"),
+        Widget(wx.MenuItem, id=wx.ID_SEPARATOR),
+        Widget(wx.MenuItem, id=-1, text=u"转任务并指派", widget_name="transfer_and_assign"),
+        Widget(wx.MenuItem, id=-1, text=u"指派任务", widget_name="assign_task"),
+        Widget(wx.MenuItem, id=-1, text=u"转任务", widget_name="transfer_task"),
+        Widget(wx.MenuItem, id=wx.ID_SEPARATOR),
         Widget(wx.MenuItem, id=-1, text=u'Copy ProblemGUID', widget_name='copy_problem_guid')
     )
 

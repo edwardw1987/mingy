@@ -29,7 +29,13 @@ URI_LOGIN = '/Default_Login.aspx'
 URI_GRID_DATA = '/_grid/griddata.aspx'
 URI_USER_TREE = '/Kfxt/RWGL/Rwcl_Edit_Rwcl_Assign_UserTree.aspx'
 URI_RWCL_EDIT = '/Kfxt/RWGL/Rwcl_Edit.aspx'
-URI_RWCL_WORK = '/Kfxt/Rwgl/Rwcl_Edit_Rwcl_WorkForm.aspx'
+URI_RWCL_WORK_FORM = '/Kfxt/Rwgl/Rwcl_Edit_Rwcl_WorkForm.aspx'
+URI_JDJL_GRID = "/Kfxt/RWGL/Jdjl_Grid.xml",  # 所有记录
+# Jdjl_Grid_My.xml 我的记录
+URI_JFWTCL_GRID = "/Kfxt/ZSJF/JFWTCL_GRID.xml"  # (所有记录)
+URI_JFWTCL_GRID_WCL = "/Kfxt/ZSJF/JFWTCL_GRID_WCL.xml"  # (未处理)
+URI_JFWTCL_GRID_YCL = "/Kfxt/ZSJF/JFWTCL_GRID_YCL.xml"  # (已处理)
+URI_JFRWCL_GRID = "/kfxt/rwgl/Rwcl_Grid_JF_JfRoom.xml"
 
 
 def handle_args():
@@ -60,8 +66,16 @@ class MinYuanClient(requests.Session):
     test_pwd = "aaa111"
     official_usr = "shenkai"
     official_pwd = "aaa222"
+    _init_addr = None
+
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(MinYuanClient, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
 
     def __init__(self, username=None, password=None, addr=MINGYUAN_OFFICIAL_ADDR):
+        if MinYuanClient._init_addr == addr:
+            return
         super(MinYuanClient, self).__init__()
         if username is None and password is None:
             if addr == MINGYUAN_TEST_ADDR:
@@ -72,6 +86,7 @@ class MinYuanClient(requests.Session):
                 password = self.official_pwd
         self.addr = addr
         self.login(username, password)
+        MinYuanClient._init_addr = addr
 
     def postUrl(self, url, *args, **kwargs):
         kwargs["timeout"] = kwargs.get("timeout", 6)
@@ -121,7 +136,7 @@ class MinYuanClient(requests.Session):
         :return: {"Jdjl": [], "errMsg": xx}
         """
         params = dict(
-            xml="/Kfxt/RWGL/Jdjl_Grid.xml",  # <= 所有记录, Jdjl_Grid_My.xml 我的记录
+            xml=URI_JDJL_GRID,
             pageSize=page_size,
             pageNum=page_num,
             gridId="appGrid",
@@ -188,13 +203,10 @@ class MinYuanClient(requests.Session):
     def getProblemList(self, project_id=PROJECT_IDS["default"], page_num=1, page_size=20):
         '''
         获取`交付问题列表`
-        xml="/Kfxt/ZSJF/JFWTCL_GRID.xml" (所有记录)
-        xml="/Kfxt/ZSJF/JFWTCL_GRID_WCL.xml" (未处理)
-        xml="/Kfxt/ZSJF/JFWTCL_GRID_YCL.xml" (已处理)
         输出列表按 录入日期 `LrDate` 降序排序 `descend`
         '''
         params = dict(
-            xml="/Kfxt/ZSJF/JFWTCL_GRID.xml",
+            xml=URI_JFWTCL_GRID,
             gridId="appGrid",
             sortCol="LrDate",
             sortDir="descend",
@@ -303,6 +315,7 @@ class MinYuanClient(requests.Session):
         return: {'taskguid':xx}
         """
         data = self._preTransferTask(problemGUID, workerGUID)
+
         # print urllib.urlencode(data)
         # self.getTaskByCode(data["txtTaskCode"])
         params = dict(
@@ -314,6 +327,9 @@ class MinYuanClient(requests.Session):
             funcid="01020502",
         )
         resp_data = self.postUrl(URI_RWCL_EDIT, params=params, data=data)
+        if not data.get('txtTaskCode'):
+            return resp_data
+        resp_data['taskcode'] = data["txtTaskCode"]
         if self.validate_response(resp_data):
             resp = resp_data.pop('response')
             soup = get_soup(resp.text)
@@ -330,13 +346,15 @@ class MinYuanClient(requests.Session):
             workguid="",
             funcid="01020504",
         )
+
         data = dict(
-            problemGUID=problemGUID,
+            ProblemGUIDStr=problemGUID,
         )
 
-        resp_data = self.postUrl(URI_RWCL_WORK, params=params, data=data)
+        resp_data = self.postUrl(URI_RWCL_WORK_FORM, params=params, data=data)
         if self.validate_response(resp_data):
             resp = resp_data.pop("response")
+            print resp.text
             # q = Q(resp.content)
             soup = get_soup(resp.text)
             # ---------- Prepare Params for Transfering Task ----------
@@ -351,11 +369,17 @@ class MinYuanClient(requests.Session):
             }:
                 e = soup.find(attrs={"name": key})
                 if e:
-                    val = e.attrs.get("value", "")
+                    if e.name == 'textarea':
+                        val = e.getText()
+                    else:
+                        val = e.attrs.get("value", "")
                     if isinstance(val, unicode):
                         val = val.encode('gb2312')
                     else:
                         val = val.decode('utf-8').encode('gb2312')
+                    if key == 'txtTsProjGUID':
+                        print key, repr(val)
+                        # & txtProblemPower = 1
                     resp_data[key] = val
             resp_data.update(dict(
                 __EVENTTARGET="__Submit",
@@ -372,17 +396,16 @@ class MinYuanClient(requests.Session):
             workguid="",
             funcid="01020504",
         )
-        resp = self.postUrl(URI_RWCL_WORK, params=params, data=data)
+        resp = self.postUrl(URI_RWCL_WORK_FORM, params=params, data=data)
         return resp
 
-    def getJFTaskList(self, project_id, task_code=None, page_num=1, page_size=20):
+    def getTaskGUIDByTaskCode(self, task_code=None, project_id=PROJECT_IDS.get('default')):
         """
-            获取交付任务列表
-            return [{'taskguid': xx, 'display': (xx,...)}...]
+            return {'taskguid': xxx}
         """
         params = dict(
             filter=init_filter(project_id, task_code),
-            xml="/kfxt/rwgl/Rwcl_Grid_JF_JfRoom.xml",
+            xml=URI_JFRWCL_GRID,
             funcid="01020504",
             gridId="appGrid",
             sortCol="",
@@ -395,8 +418,8 @@ class MinYuanClient(requests.Session):
             customFilter2="",
             dependencySQLFilter="",
             location="",
-            pageNum=page_num,
-            pageSize=page_size,
+            pageNum=1,
+            pageSize=999,
             showPageCount="1",
             appName="Default",
             application="",
@@ -406,20 +429,10 @@ class MinYuanClient(requests.Session):
         if self.validate_response(resp_data):
             response = resp_data.pop('response')
             soup = get_soup(response.text)
-            ret = []
             for tr in soup.select('tr[taskguid]'):
-                d = {'taskguid': tr.attrs["taskguid"]}
-                display = []
-                for td in tr.find_all('td'):
-                    display.append(td.getText())
-                d["display"] = tuple(display)
-                ret.append(d)
-            resp_data = ret
+                resp_data["taskguid"] = tr.attrs["taskguid"]
+                break
         return resp_data
-
-    def run_assign_task(self, problemGUID):
-        data = self.transferTask(problemGUID)
-        self.assignTask(data["taskguid"], problemGUID)
 
 
 def main():
@@ -463,9 +476,12 @@ def main():
     # mingy.getUsers()
     # for i in my.getReceiveList()["receiveList"]:
     #     print ' '.join(i).encode('utf-8')
-    resp = mingy.run_assign_task('261b3db9-21d7-4aa4-876f-ad7fdeca4d51')
-    print resp.text
-
+    # resp = mingy.run_assign_task('261b3db9-21d7-4aa4-876f-ad7fdeca4d51')
+    # print resp.text
+    data = mingy.getTaskGUIDByTaskCode('0076201702008')
+    d = mingy._createWorkSheet(data["taskguid"], 'c62d9815-3499-4ec8-8a67-302acb7378c5')
+    for k in d:
+        print k, d[k]
 
 if __name__ == '__main__':
     main()

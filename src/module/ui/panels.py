@@ -390,7 +390,7 @@ class TaskAssignPanel(BasePanel):
                     dlg.Destroy()
 
     def OnDoubleClick(self, event):
-        self.OnSyncData(event)
+        self.On
 
     def OnRightClick(self, event):
         def OnCopyTaskCode(e):
@@ -418,9 +418,103 @@ class TaskAssignPanel(BasePanel):
                 self.SetStatusText(msg)
                 self.log.WriteText(msg)
 
+        def transfer_task():
+            msg = u'转任务开始，请稍候...\n'
+            self.SetStatusText(msg)
+            self.log.WriteText(msg)
+            mingy = MinYuanClient(addr=MINGYUAN_TEST_ADDR)
+            data = mingy.transferTask(self._problem_guid)
+            msg = u'转任务失败!\n'
+            if data.get('taskguid'):
+                msg = u'转任务成功！任务编号 %s\n' % data["taskcode"]
+            elif data.get('taskcode'):
+                msg = u'转任务可能失败! 任务编号 %s\n' % data["taskcode"]
+            self.SetStatusText(msg)
+            wx.CallAfter(self.log.WriteText, msg)
+
+        def assign_task():
+            msg = u'指派任务开始，请稍候...\n'
+            self.SetStatusText(msg)
+            self.log.WriteText(msg)
+            mingy = MinYuanClient(addr=MINGYUAN_TEST_ADDR)
+            data = mingy.getTaskGUIDByTaskCode(self._taskcode)
+            mingy.assignTask(data['taskguid'], self._problem_guid)
+
+        def OnTransferTask(e):
+            def all_tasks():
+                transfer_task()
+                self.run_sync(e)
+
+            dlg = wx.MessageDialog(self,
+                                   u"是否对该条记录进行转任务操作？",
+                                   u"询问",
+                                   wx.CANCEL | wx.OK)
+            if modal_ctx.set_modal(dlg):
+                with modal_ctx as dlg:
+                    signal = dlg.ShowModal()
+                    dlg.Destroy()
+                    if signal != wx.ID_OK:
+                        return
+
+            thd = self.frame.push_thread(all_tasks)
+            _task_thread = getattr(self, '_task_thread', None)
+            # 如果旧线程isAlive则返回, 否则stop, delete旧线程
+            if _task_thread:
+                if _task_thread.isAlive():
+                    return
+                self.frame.delete_thread(_task_thread)
+            self._task_thread = thd
+            thd.start()
+
+        def OnAssignTask(e):
+            def all_task():
+                assign_task()
+                self.run_sync(e)
+
+            dlg = wx.MessageDialog(self,
+                                   u"是否对该条记录进行指派任务操作？",
+                                   u"询问",
+                                   wx.CANCEL | wx.OK)
+            if modal_ctx.set_modal(dlg):
+                with modal_ctx as dlg:
+                    signal = dlg.ShowModal()
+                    dlg.Destroy()
+                    if signal != wx.ID_OK:
+                        return
+            thd = self.frame.push_thread(all_task)
+            _task_thread = getattr(self, '_task_thread', None)
+            # 如果旧线程isAlive则返回, 否则stop, delete旧线程
+            if _task_thread:
+                if _task_thread.isAlive():
+                    return
+                self.frame.delete_thread(_task_thread)
+            self._task_thread = thd
+            thd.start()
+
+        def OnTransferAndAssign(e):
+            pass
+
         menu = MenuTaskAssign.create()
         menu.Bind(wx.EVT_MENU, OnCopyTaskCode, menu.items.copy_taskcode)
         menu.Bind(wx.EVT_MENU, OnCopyProblemGUID, menu.items.copy_problem_guid)
+        menu.Bind(wx.EVT_MENU, OnTransferTask, menu.items.transfer_task)
+        menu.Bind(wx.EVT_MENU, OnAssignTask, menu.items.assign_task)
+        menu.Bind(wx.EVT_MENU, OnTransferAndAssign, menu.items.transfer_and_assign)
+
+        if self._status_text == u'已转任务':
+            # 可以指派, 禁用其他
+            menu.items.transfer_task.Enable(False)
+            menu.items.transfer_and_assign.Enable(False)
+        elif self._status_text == u'未处理':
+            # 可以转任务，转任务并指派，禁用指派
+            menu.items.assign_task.Enable(False)
+        else:
+            menu.items.assign_task.Enable(False)
+            menu.items.transfer_task.Enable(False)
+            menu.items.transfer_and_assign.Enable(False)
+            # 禁用所有
+        if not self._taskcode:
+            menu.items.copy_taskcode.Enable(False)
         self.PopupMenu(menu)
         menu.Destroy()
 
@@ -431,4 +525,5 @@ class TaskAssignPanel(BasePanel):
 
     def OnItemSelected(self, event):
         self._problem_guid = self.get_problem_id(event)
+        self._status_text = self.list.getColumnText(event.GetIndex(), 0)
         self._taskcode = self.list.getColumnText(event.GetIndex(), 6)

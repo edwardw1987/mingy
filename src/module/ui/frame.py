@@ -78,7 +78,7 @@ class Frame(wx.Frame):
         elif hasattr(thread, '__class__'):
             t_cls = thread.__class__
             if not issubclass(t_cls, StoppableThread):
-                raise TypeError("'%' is not dervied from `StoppableThread`" % type(t_cls))
+                raise TypeError("'%s' is not dervied from `StoppableThread`" % type(t_cls))
         else:
             raise TypeError("Invalid type '%s'" % type(thread))
         return thread
