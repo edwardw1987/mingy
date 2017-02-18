@@ -154,7 +154,7 @@ class TaskAssignListCtrl(Factory, BaseListCtrl):
                 listitem.SetTextColour(wx.NamedColour("BLUE"))
                 # listitem.SetFont(listitem.GetFont().Bold())
             elif row_data[0] == u'实施中':
-                listitem.SetTextColour(wx.NamedColour("GREEN"))
+                listitem.SetTextColour(wx.NamedColour("PURPLE"))
             elif row_data[0] == u'已关闭':
                 listitem.SetTextColour(wx.NamedColour('GRAY'))
             self.SetItem(listitem)

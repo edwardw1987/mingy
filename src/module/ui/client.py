@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: vivi
 # @Date:   2016-12-23 22:07:12
-# @Last Modified by:   wangwh8
-# @Last Modified time: 2017-02-16 16:13:22
+# @Last Modified by:   edward
+# @Last Modified time: 2017-02-18 20:32:05
 import argparse
 import hashlib
 import random
@@ -11,7 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.exceptions import ConnectTimeout
 
-from templates import render_template
+from templates import render_template, FILTER
 
 # ---------- PROJECT ID ----------
 PROJECT_IDS = {
@@ -54,7 +54,7 @@ def handle_args():
 
 
 def init_filter(project_id, task_code=None):
-    return render_template("filter.xml", **locals())
+    return render_template(FILTER, **locals())
 
 
 def get_soup(html):
@@ -354,7 +354,6 @@ class MinYuanClient(requests.Session):
         resp_data = self.postUrl(URI_RWCL_WORK_FORM, params=params, data=data)
         if self.validate_response(resp_data):
             resp = resp_data.pop("response")
-            print resp.text
             # q = Q(resp.content)
             soup = get_soup(resp.text)
             # ---------- Prepare Params for Transfering Task ----------
@@ -377,9 +376,6 @@ class MinYuanClient(requests.Session):
                         val = val.encode('gb2312')
                     else:
                         val = val.decode('utf-8').encode('gb2312')
-                    if key == 'txtTsProjGUID':
-                        print key, repr(val)
-                        # & txtProblemPower = 1
                     resp_data[key] = val
             resp_data.update(dict(
                 __EVENTTARGET="__Submit",

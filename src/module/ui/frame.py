@@ -7,7 +7,7 @@ from listbook import TestLB
 from event import StoppableThread
 from types import FunctionType, UnboundMethodType
 from textctrls import LogTextCtrl
-
+from resource import rat_head
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
@@ -25,7 +25,7 @@ class Frame(wx.Frame):
         icon = path.join(basedir, '..\\..\\launcher\\rat_head.ico')
         size = (1200, 600)
         minsize = (400, 300)
-        self.SetIcon(wx.Icon(icon, wx.BITMAP_TYPE_ANY))
+        self.SetIcon(rat_head.GetIcon())
         self.SetSize(size)
         self.SetMinSize(minsize)
         self.Center()

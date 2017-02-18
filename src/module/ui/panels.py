@@ -56,17 +56,21 @@ class BasePanel(wx.Panel):
                 m.Check()
                 self.frame.SetWindowStyle(self.frame.GetWindowStyle() | wx.STAY_ON_TOP)
 
-    def OnSyncData(self, event):
-        # 新建一个子线程，用来同步接单记录，可以避免界面阻塞卡死
-        thd = self.frame.push_thread(self.run_sync, event)
-        _sync_thread = getattr(self, '_sync_thread', None)
+    def run_task(self, task, *args):
+        suffix= '_task'
+        thd = self.frame.push_thread(task, *args)
+        task_name = task.__name__ + suffix
+        _task_thread = getattr(self, task_name, None)
         # 如果旧线程isAlive则返回, 否则stop, delete旧线程
-        if _sync_thread:
-            if _sync_thread.isAlive():
+        if _task_thread:
+            if _task_thread.isAlive():
                 return
-            self.frame.delete_thread(_sync_thread)
-        self._sync_thread = thd
+            self.frame.delete_thread(_task_thread)
+        setattr(self, task_name, thd)
         thd.start()
+
+    def OnSyncData(self, event):
+        self.run_task(self.run_sync, event)
 
     def run_sync(self, event):
         raise NotImplementedError()
@@ -390,7 +394,15 @@ class TaskAssignPanel(BasePanel):
                     dlg.Destroy()
 
     def OnDoubleClick(self, event):
-        self.On
+        pass
+
+    def ShowModalDialog(self, message, caption):
+        dlg = wx.MessageDialog(self, message, caption, wx.CANCEL | wx.OK)
+        if modal_ctx.set_modal(dlg):
+            with modal_ctx as dlg:
+                signal = dlg.ShowModal()
+                dlg.Destroy()
+            return signal
 
     def OnRightClick(self, event):
         def OnCopyTaskCode(e):
@@ -441,58 +453,32 @@ class TaskAssignPanel(BasePanel):
             mingy.assignTask(data['taskguid'], self._problem_guid)
 
         def OnTransferTask(e):
-            def all_tasks():
+            def run_transfer():
                 transfer_task()
                 self.run_sync(e)
 
-            dlg = wx.MessageDialog(self,
-                                   u"是否对该条记录进行转任务操作？",
-                                   u"询问",
-                                   wx.CANCEL | wx.OK)
-            if modal_ctx.set_modal(dlg):
-                with modal_ctx as dlg:
-                    signal = dlg.ShowModal()
-                    dlg.Destroy()
-                    if signal != wx.ID_OK:
-                        return
-
-            thd = self.frame.push_thread(all_tasks)
-            _task_thread = getattr(self, '_task_thread', None)
-            # 如果旧线程isAlive则返回, 否则stop, delete旧线程
-            if _task_thread:
-                if _task_thread.isAlive():
-                    return
-                self.frame.delete_thread(_task_thread)
-            self._task_thread = thd
-            thd.start()
+            if wx.ID_OK != self.ShowModalDialog(u"是否对该条记录进行转任务操作？", u"询问"):
+                return
+            self.run_task(run_transfer)
 
         def OnAssignTask(e):
-            def all_task():
+            def run_assign():
                 assign_task()
                 self.run_sync(e)
 
-            dlg = wx.MessageDialog(self,
-                                   u"是否对该条记录进行指派任务操作？",
-                                   u"询问",
-                                   wx.CANCEL | wx.OK)
-            if modal_ctx.set_modal(dlg):
-                with modal_ctx as dlg:
-                    signal = dlg.ShowModal()
-                    dlg.Destroy()
-                    if signal != wx.ID_OK:
-                        return
-            thd = self.frame.push_thread(all_task)
-            _task_thread = getattr(self, '_task_thread', None)
-            # 如果旧线程isAlive则返回, 否则stop, delete旧线程
-            if _task_thread:
-                if _task_thread.isAlive():
-                    return
-                self.frame.delete_thread(_task_thread)
-            self._task_thread = thd
-            thd.start()
+            if wx.ID_OK != self.ShowModalDialog(u"是否对该条记录进行指派任务操作？", u"询问"):
+                return
+            self.run_task(run_assign)
 
         def OnTransferAndAssign(e):
-            pass
+            def run_transfer_assign():
+                transfer_task()
+                assign_task()
+                self.run_sync(e)
+
+            if wx.ID_OK != self.ShowModalDialog(u'是否对该条记录进行转任务及指派操作？', u"询问"):
+                return
+            self.run_task(run_transfer_assign)
 
         menu = MenuTaskAssign.create()
         menu.Bind(wx.EVT_MENU, OnCopyTaskCode, menu.items.copy_taskcode)

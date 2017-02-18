@@ -3,6 +3,7 @@
 import wx
 
 from module.ui.frame import Frame
+from module.utils import test_version
 
 
 class MingYuanApp(wx.App):
