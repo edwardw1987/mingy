@@ -7,9 +7,9 @@ import wx
 import listctrls
 from client import MinYuanClient, MINGYUAN_OFFICIAL_ADDR, MINGYUAN_TEST_ADDR
 from context import modal_ctx
-from dialogs import AutoSyncDialog
+from dialogs import AutoSyncDialog, BatchTaskDialog
 from event import CountingThread, EVT_COUNT
-from menus import MenuBar, MenuAction, MenuView, MenuSetting, MenuTaskAssign
+from menus import MenuBar, MenuAction, MenuView, MenuSetting, MenuTaskAssign, MenuBatchTask
 from util import Widget
 
 
@@ -57,7 +57,7 @@ class BasePanel(wx.Panel):
                 self.frame.SetWindowStyle(self.frame.GetWindowStyle() | wx.STAY_ON_TOP)
 
     def run_task(self, task, *args):
-        suffix= '_task'
+        suffix = '_task'
         thd = self.frame.push_thread(task, *args)
         task_name = task.__name__ + suffix
         _task_thread = getattr(self, task_name, None)
@@ -363,8 +363,23 @@ class TaskAssignPanel(BasePanel):
         '同步问题列表过程'
         self.frame.Refresh()
         self.SetStatusText(u"正在同步数据......")
-        my = MinYuanClient(addr=MINGYUAN_TEST_ADDR)
-        data = my.getProblemList(page_size=30)
+        # my = MinYuanClient(addr=MINGYUAN_TEST_ADDR)
+        # data = my.getProblemList(page_size=30)
+        data = {}
+        data['rows'] = [
+            {u'ce7fd11e-ad8c-4b9a-a25d-24b3cd21ac8a': (u'\u5df2\u8f6c\u4efb\u52a1',
+                                                       u'\u4fdd\u5229\u827e\u5e90-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04128\u53f7-1-801',
+                                                       u'\u53a8\u623f', u'\u6d82\u6599',
+                                                       u'\u7a7a\u9f13\u3001\u5f00\u88c2 \uff1b',
+                                                       u'2017-02-18 21:44', u'0076201702040')},
+            {u'ce7fd11e-ad8c-4b9a-a25d-24b3cd21ac8a': (u'未处理',
+                                                       u'\u4fdd\u5229\u827e\u5e90-\u516c\u5bd3-\u84dd\u975b\u8def1688\u5f04128\u53f7-1-801',
+                                                       u'\u53a8\u623f', u'\u6d82\u6599',
+                                                       u'\u7a7a\u9f13\u3001\u5f00\u88c2 \uff1b',
+                                                       u'2017-02-18 21:44', u'0076201702040')},
+
+        ]
+        data['rows'] = data["rows"] *50
         if data.get("rows"):
             rows = data["rows"]
             # datamap = {}
@@ -480,12 +495,52 @@ class TaskAssignPanel(BasePanel):
                 return
             self.run_task(run_transfer_assign)
 
+        def OnBatchTransferTask(e):
+            def task():
+                print 'transfer task'
+
+            dlg = BatchTaskDialog(self,
+                                  u'批量转任务',
+                                  data=self.list.getItemDataList(1)
+                                  )
+            dlg.CenterOnScreen()
+            if wx.ID_OK == dlg.ShowModal():
+                'task'
+
+        def OnBatchAssignTask(e):
+            def batch_assign_task():
+                for i in dlg.get_checked_items():
+                    print 'checked', i
+
+            dlg = BatchTaskDialog(self,
+                                  u'批量指派任务',
+                                  data=self.list.getItemDataList(2)
+                                  )
+            dlg.CenterOnScreen()
+            if wx.ID_OK == dlg.ShowModal():
+                self.run_task(batch_assign_task)
+
+        def OnBatchTransferAssign(e):
+            def task():
+                print 'transfer and assign task'
+
+            dlg = BatchTaskDialog(self,
+                                  u'批量转任务并指派',
+                                  data=self.list.getItemDataList(1)
+                                  )
+            dlg.CenterOnScreen()
+            if wx.ID_OK == dlg.ShowModal():
+                print 'ok'
+
         menu = MenuTaskAssign.create()
         menu.Bind(wx.EVT_MENU, OnCopyTaskCode, menu.items.copy_taskcode)
         menu.Bind(wx.EVT_MENU, OnCopyProblemGUID, menu.items.copy_problem_guid)
         menu.Bind(wx.EVT_MENU, OnTransferTask, menu.items.transfer_task)
         menu.Bind(wx.EVT_MENU, OnAssignTask, menu.items.assign_task)
         menu.Bind(wx.EVT_MENU, OnTransferAndAssign, menu.items.transfer_and_assign)
+        menu.Bind(wx.EVT_MENU, OnBatchTransferTask, MenuBatchTask.items.transfer_task)
+        menu.Bind(wx.EVT_MENU, OnBatchAssignTask, MenuBatchTask.items.assign_task)
+        menu.Bind(wx.EVT_MENU, OnBatchTransferAssign, MenuBatchTask.items.transfer_and_assign)
 
         if self._status_text == u'已转任务':
             # 可以指派, 禁用其他
@@ -501,6 +556,11 @@ class TaskAssignPanel(BasePanel):
             # 禁用所有
         if not self._taskcode:
             menu.items.copy_taskcode.Enable(False)
+        if not self.list.has_unhandled_problems():
+            MenuBatchTask.items.transfer_task.Enable(False)
+            MenuBatchTask.items.transfer_and_assign.Enable(False)
+        if not self.list.has_transfered_task():
+            MenuBatchTask.items.assign_task.Enable(False)
         self.PopupMenu(menu)
         menu.Destroy()
 

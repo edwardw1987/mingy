@@ -1,11 +1,12 @@
 # coding:utf-8
 import wx
-from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin, ColumnSorterMixin
-from util import Widget, WidgetArray, Factory
+from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin, ColumnSorterMixin, CheckListCtrlMixin
+
 import images
+from util import Widget, WidgetArray, Factory
 
 
-class BaseListCtrl(wx.ListCtrl,
+class SortListCtrl(wx.ListCtrl,
                    ListCtrlAutoWidthMixin,
                    ColumnSorterMixin
                    ):
@@ -59,7 +60,28 @@ class BaseListCtrl(wx.ListCtrl,
         item = self.GetItem(index, col)
         return item.GetText()
 
-class ReceivesListCtrl(Factory, BaseListCtrl):
+
+class CheckSortListCtrl(SortListCtrl, CheckListCtrlMixin):
+    def __init__(self, *args, **kwargs):
+        super(CheckSortListCtrl, self).__init__(*args, **kwargs)
+        CheckListCtrlMixin.__init__(self)
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
+
+    def OnItemActivated(self, evt):
+        self.ToggleItem(evt.m_itemIndex)
+
+    # this is called by the base class when an item is checked/unchecked
+    def OnCheckItem(self, index, flag):
+        data = self.GetItemData(index)
+        # title = musicdata[data][1]
+        if flag:
+            what = "checked"
+        else:
+            what = "unchecked"
+        print what
+
+
+class ReceivesListCtrl(Factory, SortListCtrl):
     headings = WidgetArray(
         Widget(wx.ListItem, text=u'接待时间'),
         Widget(wx.ListItem, text=u'主题'),
@@ -109,8 +131,13 @@ class ReceivesListCtrl(Factory, BaseListCtrl):
 
         return
 
+BATCH_TASK_TYPE = {
+    1: u'未处理',
+    2: u'已转任务'
+}
 
-class TaskAssignListCtrl(Factory, BaseListCtrl):
+
+class TaskAssignListCtrl(Factory, SortListCtrl):
     headings = WidgetArray(
         Widget(wx.ListItem, text=u'状态'),  # 2
         Widget(wx.ListItem, text=u'房产'),  # 3
@@ -165,3 +192,28 @@ class TaskAssignListCtrl(Factory, BaseListCtrl):
         self.SetColumnWidth(2, wx.LIST_AUTOSIZE)
 
         return
+
+    def has_unhandled_problems(self):
+        for _, v in self.itemDataMap.iteritems():
+            if v[0] == BATCH_TASK_TYPE[1]:
+                return True
+        return False
+
+    def has_transfered_task(self):
+        for _, v in self.itemDataMap.iteritems():
+            if v[0] == BATCH_TASK_TYPE[2]:
+                return True
+        return False
+
+    def getItemDataList(self, type):
+        '''
+        type `1` get datalist of `status` `未处理`
+            `2`               of `status` `已转任务`
+        '''
+
+        ret = []
+        for k, v in self.itemDataMap.iteritems():
+            line = (' ' * 4).join(v)
+            if v[0] == BATCH_TASK_TYPE[type]:
+                ret.append(line)
+        return ret

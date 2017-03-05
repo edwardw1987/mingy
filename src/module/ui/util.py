@@ -132,6 +132,10 @@ class MenuFactory(Factory, wx.Menu):
     @classmethod
     def create(cls):
         self = cls()
-        for mi_widget in cls.iter_widegts():
-            self.AppendItem(mi_widget.create())
+        for widget in cls.iter_widegts():
+            inst = widget.create()
+            try: # menu item
+                self.AppendItem(inst)
+            except TypeError: # menu type
+                self.AppendMenu(-1, widget.get('text'), inst)
         return self
